@@ -1,4 +1,4 @@
-# $Id: Completion.pm,v 1.3 2002/03/06 08:43:02 pajas Exp $
+# $Id: Completion.pm,v 1.4 2002/03/14 17:39:24 pajas Exp $
 
 package XML::XSH::Completion;
 
@@ -7,10 +7,10 @@ use strict;
 
 sub cpl {
   my($word,$line,$pos) = @_;
-  if ($line=~/^\s*\S*$/) {
+  if ($line=~/^\s*[^=\s]*$/) {
     return grep { index($_,$word)==0 } @XML::XSH::CompletionList::XSH_COMMANDS;
   } else {
-    return readline::rl_filename_list(@_);
+    return map { s:\@$::; $_ } readline::rl_filename_list(@_);
   }
 }
 

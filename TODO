@@ -1,5 +1,5 @@
 * support DTD modification
 * better support for namespaces
 * allow entity reference insertion
-* parameter passing to user defined functions
+* allow parameters for user defined functions
 * maybe perl-like while/foreach (not xpath)

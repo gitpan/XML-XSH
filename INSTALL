@@ -8,11 +8,18 @@ Then install xsh either
 automatically (highly recommended):
 -----------------------------------
 
-run:
+From CPAN:
 
-  perl Makefile.PL  
-  make
-  make install
+$ perl -MCPAN -e shell
+cpan> install XML::XSH
+
+From tar-ball
+
+$ unzip xsh-1.??.tar.gz
+$ cd xsh-1.??
+$ perl Makefile.PL  
+$ make
+$ make install
 
 you may use `perl Makefile.PL PREFIX=<prefix>' to install to a
 directory tree different from /usr
@@ -41,7 +48,7 @@ For example:
 Requirements:
 -------------
 
-o Unix/BSD/Linux/Windows+Cygwin or similar operating system
+o Unix/BSD/Linux or similar operating system
 o Perl version 5.6 (may work with earlier Perl5, but wasn't tested)
 o The following modules, available at CPAN http://www.cpan.org:
 

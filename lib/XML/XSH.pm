@@ -1,4 +1,4 @@
-# $Id: XSH.pm,v 1.2 2002/03/08 18:29:49 pajas Exp $
+# $Id: XSH.pm,v 1.3 2002/03/14 17:33:47 pajas Exp $
 
 package XML::XSH;
 
@@ -10,7 +10,7 @@ use XML::XSH::Functions qw(:default);
 use XML::XSH::Completion;
 
 BEGIN {
-  $VERSION   = '1.0';
+  $VERSION   = '1.1';
   @ISA       = qw(Exporter);
   @EXPORT_OK = @XML::XSH::Functions::EXPORT_OK;
 }

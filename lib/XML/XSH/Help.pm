@@ -1,5 +1,5 @@
 # This file was automatically generated from src/xsh_grammar.xml on 
-# Fri Mar  8 18:58:17 2002
+# Thu Mar 14 14:41:31 2002
 
 package XML::XSH::Help;
 use strict;
@@ -22,6 +22,9 @@ Example: which counts any attributes that contain string foo in its name or
 
   Many commands have aliases. See help <command> for a list.
 
+  You may navigate in documents with `cd' command followed by XPath much
+  like on your filesystem.
+
   In the interactive shell use slash in the end of line to indicate that
   the command follows on next line.
 
@@ -30,12 +33,13 @@ Example: which counts any attributes that contain string foo in its name or
 
   Available commands: assign, call, cd, clone, close, complete_attributes,
   copy, count, create, debug, def, defs, dtd, encoding, eval, exec, exit,
-  files, foreach, help, if, include, indent, insert, keep_blanks, list,
-  load_ext_dtd, map, move, nodebug, open, parser_expands_entities,
-  parser_expands_xinclude, pedantic_parser, print, print_enc_command,
-  process_xinclude, query-encoding, quiet, remove, run-mode, save, saveas,
-  select, test-mode, unless, valid, validate, validation, variables,
-  verbose, version, while, xcopy, xinsert, xmove_command, xslt
+  files, foreach, help, if, include, indent, insert, keep_blanks, lcd,
+  list, load_ext_dtd, locate, map, move, nodebug, open,
+  parser_expands_entities, parser_expands_xinclude, pedantic_parser, print,
+  print_enc_command, process_xinclude, pwd, query-encoding, quiet, remove,
+  run-mode, save, saveas, select, test-mode, unless, valid, validate,
+  validation, variables, verbose, version, while, xcopy, xinsert,
+  xmove_command, xslt
 
   Type help <command|type> to get more information on a given command or
   argument type.
@@ -99,7 +103,7 @@ Xpath argument type
 description: Any XPath expression as defined in W3C recommendation at
 	     http://www.w3.org/TR/xpath optionaly preceded with a document
 	     identifier followed by colon. If no identifier is used, the
-	     most recently adressed or opened document is used.
+	     current document is used.
 
 Example:     Open a document and count all chapters containing a subsection
 	     in it
@@ -264,13 +268,14 @@ List of XSH commands
 
 description: assign, call, cd, clone, close, complete_attributes, copy, count, create,
 	     debug, def, defs, dtd, encoding, eval, exec, exit, files,
-	     foreach, help, if, include, indent, insert, keep_blanks, list,
-	     load_ext_dtd, map, move, nodebug, open,
+	     foreach, help, if, include, indent, insert, keep_blanks, lcd,
+	     list, load_ext_dtd, locate, map, move, nodebug, open,
 	     parser_expands_entities, parser_expands_xinclude,
 	     pedantic_parser, print, print_enc_command, process_xinclude,
-	     query-encoding, quiet, remove, run-mode, save, saveas, select,
-	     test-mode, unless, valid, validate, validation, variables,
-	     verbose, version, while, xcopy, xinsert, xmove_command, xslt
+	     pwd, query-encoding, quiet, remove, run-mode, save, saveas,
+	     select, test-mode, unless, valid, validate, validation,
+	     variables, verbose, version, while, xcopy, xinsert,
+	     xmove_command, xslt
 
 END
 
@@ -354,11 +359,20 @@ END
 $HELP{'define'}=$HELP{def};
 
 $HELP{'assign'}=[<<'END'];
-usage:       assign $<id>=<expression> or just $<id>=<expression>
+usage:       assign $<id>=<expression> or 
+	  $<id>=<expression> or
+	  assign %<id>=<xpath> or 
+	  %<id>=<xpath>
 
-description: Store the result of interpolation of the <expression> in a variable named
-	     $<id>. The variable may be later used in other expressions or
-	     even in perl-code as $<id> or ${<id>}.
+description: In the first two cases (where dollar sign appears) store the result of
+	     interpolation of the <expression> in a variable named $<id>.
+	     The variable may be later used in other expressions or even in
+	     perl-code as $<id> or ${<id>}.
+
+	     In the other two cases (where percent sign appears) find all
+	     nodes matching the given <xpath> and store the resulting
+	     nodelist in the variable named %<id>. The variable may be
+	     later used instead of an XPath expression.
 
 END
 
@@ -522,19 +536,19 @@ END
 
 $HELP{'xcp'}=$HELP{xcopy};
 
-$HELP{'cd'}=[<<'END'];
-usage:       cd <expression>
+$HELP{'lcd'}=[<<'END'];
+usage:       lcd <expression>
 
 aliases:     chdir
 
-description: Changes the working directory to <expression>, if possible. If
+description: Changes the filesystem working directory to <expression>, if possible. If
 	     <expression> is omitted, changes to the directory specified in
 	     HOME environment variable, if set; if not, changes to the
 	     directory specified by LOGDIR environment variable.
 
 END
 
-$HELP{'chdir'}=$HELP{cd};
+$HELP{'chdir'}=$HELP{lcd};
 
 $HELP{'insert'}=[<<'END'];
 usage:       insert <node-type> <expression> [namespace <expression>] <location><xpath>
@@ -657,12 +671,18 @@ END
 $HELP{'dup'}=$HELP{clone};
 
 $HELP{'list'}=[<<'END'];
-usage:       list <xpath>
+usage:       list <xpath> [<expression>]
 
 aliases:     ls
 
-description: List the XML representation of all elements matching <xpath>. Unless in
-	     quiet mode, print number of nodes matched on stderr.
+description: List the XML representation of all nodes matching <xpath>. The optional
+	     expression argument may be provided to specify the depth of
+	     XML tree listing. If negative, the tree will be listed to
+	     arbitrary depth. Unless in quiet mode, this command prints
+	     number of nodes matched on stderr.
+
+	     If the <xpath> parameter is omitted, current context node is
+	     listed to the depth of 1.
 
 END
 
@@ -885,8 +905,7 @@ $HELP{'dtd'}=[<<'END'];
 usage:       dtd [<id>]
 
 description: Print external or internal DTD for the given document. If no document
-	     identifier is given, the document last used in an Xpath
-	     expression or a command is used.
+	     identifier is given, the current document is used.
 
 END
 
@@ -895,8 +914,7 @@ $HELP{'print_enc_command'}=[<<'END'];
 usage:       enc [<id>]
 
 description: Print the original document encoding string. If no document identifier is
-	     given, the document last used in an Xpath expression or a
-	     command is used.
+	     given, the current document is used.
 
 END
 
@@ -906,8 +924,7 @@ usage:       validate [<id>]
 
 description: Try to validate the document identified with <id> according to its DTD,
 	     report all validity errors. If no document identifier is
-	     given, the document last used in an Xpath expression or a
-	     command is used.
+	     given, the current document is used.
 
 END
 
@@ -917,8 +934,7 @@ usage:       valid [<id>]
 
 description: Check and report the validity of a document. Prints "yes" if the document
 	     is valid and "no" otherwise. If no document identifier is
-	     given, the document last used in an Xpath expression or a
-	     command is used.
+	     given, the current document is used.
 
 END
 
@@ -951,6 +967,35 @@ $HELP{'xinclude'}=$HELP{process_xinclude};
 $HELP{'xincludes'}=$HELP{process_xinclude};
 $HELP{'load_xincludes'}=$HELP{process_xinclude};
 $HELP{'load_xinclude'}=$HELP{process_xinclude};
+
+$HELP{'cd'}=[<<'END'];
+usage:       cd [<xpath>]
+
+aliases:     chxpath
+
+description: Change current context node (and current document) to the first node
+	     matching the given <xpath> argument.
+
+END
+
+$HELP{'chxpath'}=$HELP{cd};
+
+$HELP{'pwd'}=[<<'END'];
+usage:       pwd
+
+description: Print XPath leading to the current context node. This is equivalent to
+	     `locate .'.
+
+END
+
+
+$HELP{'locate'}=[<<'END'];
+usage:       locate <xpath>
+
+description: Print canonical XPaths leading to nodes matched by the <xpath> given.
+
+END
+
 
 
 1;

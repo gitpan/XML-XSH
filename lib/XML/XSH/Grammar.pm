@@ -1,5 +1,5 @@
 # This file was automatically generated from src/xsh_grammar.xml on 
-# Fri Mar  8 18:58:17 2002
+# Thu Mar 14 14:41:31 2002
 
 
 package XML::XSH::Grammar;
@@ -143,6 +143,11 @@ $grammar=<<'_EO_GRAMMAR_';
   variable:
 	    '$' <skip:""> ID
 		{ "$item[1]$item[3]" }
+  	
+
+  nodelistvariable:
+	    '%' <skip:""> ID
+		{ $item[3] }
   	
 
   eof:
@@ -306,7 +311,8 @@ $grammar=<<'_EO_GRAMMAR_';
   	
 
   command:
-	   ( copy_command
+	   ( option
+	  | copy_command
 	  | xcopy_command
 	  | move_command
 	  | xmove_command
@@ -341,13 +347,15 @@ $grammar=<<'_EO_GRAMMAR_';
 	  | create_command
 	  | list_defs_command
 	  | select_command
-	  | option
 	  | if
 	  | unless
 	  | while
 	  | foreach
 	  | def
 	  | process_xinclude_command
+	  | chxpath_command
+	  | pwd_command
+	  | locate_command
 	   )
 		{ [$item[1]] }
   	
@@ -412,6 +420,12 @@ $grammar=<<'_EO_GRAMMAR_';
   	
 	  | variable '=' xpath
 		{ [\&XML::XSH::Functions::xpath_assign,$item[1],$item[3]] }
+  	
+	  | /(assign)\s/ nodelistvariable '=' xpath
+		{ [\&XML::XSH::Functions::nodelist_assign,$item[2],$item[4]] }
+  	
+	  | nodelistvariable '=' xpath
+		{ [\&XML::XSH::Functions::nodelist_assign,$item[1],$item[3]] }
   	
 
   print_var_command:
@@ -487,10 +501,10 @@ $grammar=<<'_EO_GRAMMAR_';
   	
 
   cd_command:
-	    /(cd|chdir)\s/ filename
+	    /(lcd|chdir)\s/ filename
 		{ [\&XML::XSH::Functions::cd,$item[2]] }
   	
-	  | /(cd|chdir)/
+	  | /(lcd|chdir)/
 		{ [\&XML::XSH::Functions::cd] }
   	
 
@@ -557,11 +571,14 @@ $grammar=<<'_EO_GRAMMAR_';
   	
 
   list_command:
-	    /(list|ls)\s/ xpath
-		{ [\&XML::XSH::Functions::list,$item[2]] }
+	    /(list|ls)\s/ xpath expression
+		{ [\&XML::XSH::Functions::list,$item[2],$item[3]] }
+  	
+	  | /(list|ls)\s/ xpath
+		{ [\&XML::XSH::Functions::list,$item[2],-1] }
   	
 	  | /(list|ls)/
-		{ [\&XML::XSH::Functions::list] }
+		{ [\&XML::XSH::Functions::list,[undef,'.'],1] }
   	
 
   count_command:
@@ -603,7 +620,7 @@ $grammar=<<'_EO_GRAMMAR_';
 
   select_command:
 	    /(select)\s/ ID
-		{ [\&XML::XSH::Functions::set_last_id,$item[2]] }
+		{ [\&XML::XSH::Functions::set_local_xpath,[$item[2],"/"]] }
   	
 
   open_command:
@@ -681,6 +698,27 @@ $grammar=<<'_EO_GRAMMAR_';
   	
 	  | /(process_xinclude|process_xincludes|xinclude|xincludes|load_xincludes|load_xinclude)/
 		{ [\&XML::XSH::Functions::process_xinclude,undef] }
+  	
+
+  chxpath_command:
+	    /(cd|chxpath)\s/ xpath
+		{ [\&XML::XSH::Functions::set_local_xpath,$item[2]] }
+  	
+	  | /(cd|chxpath)/
+		{ [\&XML::XSH::Functions::set_local_xpath,undef] }
+  	
+
+  pwd_command:
+	    /(pwd)/
+		{ [\&XML::XSH::Functions::print_pwd] }
+  	
+
+  locate_command:
+	    /(locate)\s/ xpath
+		{ [\&XML::XSH::Functions::locate,$item[2]] }
+  	
+	  | /(locate)/
+		{ [\&XML::XSH::Functions::locate,undef] }
   	
 
 

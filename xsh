@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- cperl -*-
 
-# $Id: xsh,v 1.2 2002/03/08 18:01:49 pajas Exp $
+# $Id: xsh,v 1.3 2002/03/14 17:33:37 pajas Exp $
 
 use FindBin;
 use lib ("$FindBin::RealBin", "$FindBin::RealBin/../lib",
@@ -14,20 +14,20 @@ package main;
 use strict;
 
 use Getopt::Std;
-use vars qw/$opt_q $opt_i $opt_h $opt_V $opt_E $opt_e $opt_d $opt_c/;
+use vars qw/$opt_q $opt_i $opt_h $opt_V $opt_E $opt_e $opt_d $opt_c $opt_s/;
 use vars qw/$VERSION $REVISION/;
 
 use IO::Handle;
 
-use XML::XSH qw(&xsh_set_output &xsh &xsh_init
+use XML::XSH qw(&xsh_set_output &xsh &xsh_init &xsh_pwd &xsh_local_id
 		&set_opt_q &set_opt_d &set_opt_c);
 
 require Term::ReadLine if $opt_i;
 
 BEGIN {
-  getopts('cqdhViE:e:');
+  getopts('scqdhViE:e:');
   $VERSION='0.9';
-  $REVISION='$Revision: 1.2 $';
+  $REVISION='$Revision: 1.3 $';
   $ENV{PERL_READLINE_NOWARN}=1;
 }
 
@@ -40,6 +40,7 @@ if ($opt_h) {
   print "   -i   interactive\n\n";
   print "   -d   print debug messages\n\n";
   print "   -c   compile (parse) only and report errors\n\n";
+  print "   -s   try to prevent XML::LibXML segmentation faults\n\n";
   print "   -V   print version\n\n";
   print "   -h   help\n\n";
   exit 1;
@@ -59,9 +60,12 @@ xsh_init();
 set_opt_q($opt_q);
 set_opt_d($opt_d);
 set_opt_c($opt_c);
-my $doc=XML::XSH::Functions::create_doc("scratch","scratch");
-XML::XSH::Functions::set_last_id("scratch");
 
+$XML::XSH::Functions::SIGSEGV_SAFE=$opt_s;
+
+my $doc=XML::XSH::Functions::create_doc("scratch","scratch");
+#XML::XSH::Functions::set_last_id("scratch");
+XML::XSH::Functions::set_local_xpath(['scratch','/']);
 
 my $string=join " ",@ARGV;
 my $l;
@@ -105,7 +109,7 @@ if ($opt_i) {
     print STDERR "Using terminal type: ",$term->ReadLine,"\n";
       print STDERR "Hint: Type `help' or `help | less' to get more help.\n";
   }
-  while (defined ($l = $term->readline('xsh> '))) {
+  while (defined ($l = $term->readline(prompt()))) {
     while ($l=~/\\+\s*$/) {
       $l=~s/\\+\s*$//;
       $l .= $term->readline('> ');
@@ -122,3 +126,6 @@ if ($opt_i) {
 
 print STDERR "Good bye!\n" if $opt_i and not "$opt_q";
 
+sub prompt {
+  return 'xsh '.xsh_local_id().":".xsh_pwd().'> ';
+}

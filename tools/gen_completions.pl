@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: gen_completions.pl,v 1.2 2002/03/06 08:51:27 pajas Exp $
+# $Id: gen_completions.pl,v 1.3 2002/03/14 17:32:06 pajas Exp $
 
 use strict;
 use XML::LibXML;
@@ -33,6 +33,8 @@ sub get_name {
 }
 
 my $parser=XML::LibXML->new();
+$parser->load_ext_dtd(1);
+$parser->validation(1);
 my $doc=$parser->parse_file($ARGV[0]);
 
 my $dom=$doc->getDocumentElement();

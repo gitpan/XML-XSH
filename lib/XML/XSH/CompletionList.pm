@@ -11,6 +11,7 @@ assign
 call
 cd
 chdir
+chxpath
 clone
 close
 complete_attributes
@@ -39,10 +40,12 @@ include
 indent
 insert
 keep_blanks
+lcd
 list
 load_ext_dtd
 load_xinclude
 load_xincludes
+locate
 ls
 map
 move
@@ -60,6 +63,7 @@ process
 process_xinclude
 process_xincludes
 prune
+pwd
 query-encoding
 quiet
 quit

@@ -26,7 +26,7 @@ count count(//foo[@count and @bar=string(@count)-1])>0;
 
 perl { 1+1; };
 
-exec list -l;
+exec ls -l;
 
 ! echo -n " sh test: "; echo " (success)";
 
@@ -68,7 +68,15 @@ count scratch:count(/scratch/oof)=9;
 
 count t:count(/scratch/foo/oof)=1;
 
+locate //oof | cat 1>&2
+
+cd t:/scratch/foo/oof/text()
+
+pwd | cat 1>&2
+
 remove t://oof;
+
+pwd | cat 1>&2
 
 count t:count(/scratch/foo/oof)=0;
 
@@ -97,7 +105,7 @@ count //root;
 count count(//br)=2;
 count //text()[contains(.,'simple')];
 
-dtd;
+dtd | cat 1>&2;
 
 valid;
 
@@ -111,12 +119,19 @@ ls scratch:/ | cat 1>&2
 ls t:/ | cat 1>&2
 ls new1:/ | cat 1>&2
 ls new2:/ | cat 1>&2
+
+select t
+
+close t
+
+ls / | cat 1>&2
 EOF
 
   plan tests => 4+@xsh_test;
 }
 END { ok(0) unless $loaded; }
-use XML::XSH qw/&xsh &xsh_init &set_opt_q/;
+use XML::XSH qw/&xsh &xsh_init &set_opt_q &xsh_set_output/;
+$XML::XSH::Functions::SIGSEGV_SAFE=1;
 $loaded=1;
 ok(1);
 
@@ -126,6 +141,7 @@ $::RD_ERRORS = 1; # Make sure the parser dies when it encounters an error
 $::RD_WARN   = 1; # Enable warnings. This will warn on unused rules &c.
 $::RD_HINT   = 1; # Give out hints to help fix problems.
 
+xsh_set_output(\*STDERR);
 set_opt_q(0);
 xsh_init();
 
@@ -136,9 +152,9 @@ print STDERR "\n";
 ok ( XML::XSH::Functions::create_doc("scratch","scratch") );
 
 print STDERR "\n";
-ok ( XML::XSH::Functions::set_last_id("scratch") );
+ok ( XML::XSH::Functions::set_local_xpath(['scratch','/']) );
 
 foreach (@xsh_test) {
-  print STDERR "\n";
+  print STDERR "\n\n[[ $_ ]]\n";
   ok( xsh($_) );
 }

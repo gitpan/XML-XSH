@@ -19,6 +19,10 @@
       Many commands have aliases. See help &lt;command> for a list.
     </para>
     <para>
+      You may navigate in documents with `cd' command followed by
+      XPath much like on your filesystem. 
+    </para>
+    <para>
       In the interactive shell use slash in the end of line to
       indicate that the command follows on next line.
     </para>
@@ -226,8 +230,7 @@ sub new {
 	  Any XPath expression as defined in W3C recommendation at
 	  http://www.w3.org/TR/xpath optionaly preceded with
 	  a document identifier followed by colon. If no identifier
-	  is used, the most recently adressed or opened document is
-	  used.
+	  is used, the current document is used.
 	</para>
 	<example>
 	  <title>Open a document and count all chapters containing a
@@ -357,6 +360,14 @@ sub new {
       <directive type="skip">""</directive>
       <ruleref ref="ID"/>
       <action>"$item[1]$item[3]"</action>
+    </production>
+  </rule>
+  <rule id="nodelistvariable">
+    <production>
+      <literal>%</literal>
+      <directive type="skip">""</directive>
+      <ruleref ref="ID"/>
+      <action>$item[3]</action>
     </production>
   </rule>
   <rule id="eof">
@@ -737,48 +748,51 @@ sub new {
   <rule id="command">
     <production>
       <group>
-	<production><ruleref ref="copy_command"/></production>
-	<production><ruleref ref="xcopy_command"/></production>
-	<production><ruleref ref="move_command"/></production>
-	<production><ruleref ref="xmove_command"/></production>
-	<production><ruleref ref="list_command"/></production>
-	<production><ruleref ref="exit_command"/></production>
-	<production><ruleref ref="prune_command"/></production>
-	<production><ruleref ref="map_command"/></production>
-	<production><ruleref ref="close_command"/></production>
-	<production><ruleref ref="open_command"/></production>
-	<production><ruleref ref="validate_command"/></production>
-	<production><ruleref ref="valid_command"/></production>
-	<production><ruleref ref="list_dtd_command"/></production>
-	<production><ruleref ref="print_enc_command"/></production>
-	<production><ruleref ref="cd_command"/></production>
-	<production><ruleref ref="clone_command"/></production>
-	<production><ruleref ref="count_command"/></production>
-	<production><ruleref ref="eval_command"/></production>
-	<production><ruleref ref="save_command"/></production>
-	<production><ruleref ref="saveas_command"/></production>
-	<production><ruleref ref="files_command"/></production>
-	<production><ruleref ref="xslt_command"/></production>
-	<production><ruleref ref="insert_command"/></production>
-	<production><ruleref ref="xinsert_command"/></production>
-	<production><ruleref ref="help_command"/></production>
-	<production><ruleref ref="exec_command "/></production>
-	<production><ruleref ref="call_command"/></production>
-	<production><ruleref ref="include_command"/></production>
-	<production><ruleref ref="assign_command"/></production>
-	<production><ruleref ref="print_var_command"/></production>
-	<production><ruleref ref="var_command"/></production>
-	<production><ruleref ref="print_command"/></production>
-	<production><ruleref ref="create_command"/></production>
-	<production><ruleref ref="list_defs_command"/></production>
-	<production><ruleref ref="select_command"/></production>
-	<production><ruleref ref="option"/></production>
-	<production><ruleref ref="if"/></production>
-	<production><ruleref ref="unless"/></production>
-	<production><ruleref ref="while"/></production>
-	<production><ruleref ref="foreach"/></production>
-	<production><ruleref ref="def"/></production>
-	<production><ruleref ref="process_xinclude_command"/></production>    	
+	  <production><ruleref ref="option"/></production>
+	  <production><ruleref ref="copy_command"/></production>
+	  <production><ruleref ref="xcopy_command"/></production>
+	  <production><ruleref ref="move_command"/></production>
+	  <production><ruleref ref="xmove_command"/></production>
+	  <production><ruleref ref="list_command"/></production>
+	  <production><ruleref ref="exit_command"/></production>
+	  <production><ruleref ref="prune_command"/></production>
+	  <production><ruleref ref="map_command"/></production>
+	  <production><ruleref ref="close_command"/></production>
+	  <production><ruleref ref="open_command"/></production>
+	  <production><ruleref ref="validate_command"/></production>
+	  <production><ruleref ref="valid_command"/></production>
+	  <production><ruleref ref="list_dtd_command"/></production>
+	  <production><ruleref ref="print_enc_command"/></production>
+	  <production><ruleref ref="cd_command"/></production>
+	  <production><ruleref ref="clone_command"/></production>
+	  <production><ruleref ref="count_command"/></production>
+	  <production><ruleref ref="eval_command"/></production>
+	  <production><ruleref ref="save_command"/></production>
+	  <production><ruleref ref="saveas_command"/></production>
+	  <production><ruleref ref="files_command"/></production>
+	  <production><ruleref ref="xslt_command"/></production>
+	  <production><ruleref ref="insert_command"/></production>
+	  <production><ruleref ref="xinsert_command"/></production>
+	  <production><ruleref ref="help_command"/></production>
+	  <production><ruleref ref="exec_command"/></production>
+	  <production><ruleref ref="call_command"/></production>
+	  <production><ruleref ref="include_command"/></production>
+	  <production><ruleref ref="assign_command"/></production>
+	  <production><ruleref ref="print_var_command"/></production>
+	  <production><ruleref ref="var_command"/></production>
+	  <production><ruleref ref="print_command"/></production>
+	  <production><ruleref ref="create_command"/></production>
+	  <production><ruleref ref="list_defs_command"/></production>
+	  <production><ruleref ref="select_command"/></production>
+	  <production><ruleref ref="if"/></production>
+	  <production><ruleref ref="unless"/></production>
+	  <production><ruleref ref="while"/></production>
+	  <production><ruleref ref="foreach"/></production>
+	  <production><ruleref ref="def"/></production>
+	  <production><ruleref ref="process_xinclude_command"/></production>    	
+	  <production><ruleref ref="chxpath_command"/></production>
+	  <production><ruleref ref="pwd_command"/></production>
+	  <production><ruleref ref="locate_command"/></production>
       </group>
       <action>[$item[1]]</action>
     </production>
@@ -788,7 +802,7 @@ sub new {
 	  <para><typeref types="command"/></para>
 	</description>
       </documentation>
-  </rule>
+  </rule>    
   <rule id="command_block" type="argtype" name="command-block">
     <production>
       <group>
@@ -980,17 +994,43 @@ sub new {
       <ruleref ref="xpath"/>
       <action>[\&amp;XML::XSH::Functions::xpath_assign,$item[1],$item[3]]</action>
     </production>
+    <production>
+      <selfref/>
+      <ruleref ref="nodelistvariable"/>
+      <literal>=</literal>
+      <ruleref ref="xpath"/>
+      <action>[\&amp;XML::XSH::Functions::nodelist_assign,$item[2],$item[4]]</action>
+    </production>
+    <production>
+      <ruleref ref="nodelistvariable"/>
+      <literal>=</literal>
+      <ruleref ref="xpath"/>
+      <action>[\&amp;XML::XSH::Functions::nodelist_assign,$item[1],$item[3]]</action>
+    </production>
     <documentation>
       <usage>assign $<xref linkend='ID'/>=<xref
-	  linkend="expression"/> or just $<xref linkend='ID'/>=<xref
-	  linkend="expression"/></usage>
+	  linkend="expression"/> or 
+	  $<xref linkend='ID'/>=<xref
+	  linkend="expression"/> or
+	  assign %<xref linkend='ID'/>=<xref
+	  linkend="xpath"/> or 
+	  %<xref linkend='ID'/>=<xref
+	  linkend="xpath"/></usage>
       <description>
 	<para> 
-	  Store the result of interpolation of the <xref
+	  In the first two cases (where dollar sign appears)
+	  store the result of interpolation of the <xref
 	  linkend="expression"/> in a variable named $<xref
 	  linkend='ID'/>. The variable may be later used in other
 	  expressions or even in perl-code as $<xref linkend='ID'/> or
 	  ${<xref linkend='ID'/>}.
+	</para>
+	<para> 
+	  In the other two cases (where percent sign appears)
+	  find all nodes matching the given <xref linkend="xpath"/>
+	  and store the resulting nodelist in the variable
+	  named %<xref linkend='ID'/>. The variable may be later used
+	  instead of an XPath expression.
 	</para>
       </description>
       <see-also>
@@ -1286,7 +1326,7 @@ sub new {
       </description>
     </documentation>
   </rule>
-  <rule type='command' id="cd_command" name="cd">
+  <rule type='command' id="cd_command" name="lcd">
     <aliases>
       <alias name="chdir"/>
     </aliases>
@@ -1300,10 +1340,10 @@ sub new {
       <action>[\&amp;XML::XSH::Functions::cd]</action>
     </production>
     <documentation>
-      <usage>cd <xref linkend="expression"/></usage>
+      <usage>lcd <xref linkend="expression"/></usage>
       <description>
 	<para>
-	  Changes the working directory to <xref
+	  Changes the filesystem working directory to <xref
 	  linkend='expression'/>, if possible.  If <xref
 	  linkend='expression'/> is omitted, changes to the directory
 	  specified in HOME environment variable, if set; if not,
@@ -1589,19 +1629,32 @@ sub new {
     <production>
       <selfref/>
       <ruleref ref="xpath"/>
-      <action>[\&amp;XML::XSH::Functions::list,$item[2]]</action>
+      <ruleref ref="expression"/>
+      <action>[\&amp;XML::XSH::Functions::list,$item[2],$item[3]]</action>
     </production>
     <production>
       <selfref/>
-      <action>[\&amp;XML::XSH::Functions::list]</action>
+      <ruleref ref="xpath"/>
+      <action>[\&amp;XML::XSH::Functions::list,$item[2],-1]</action>
+    </production>
+    <production>
+      <selfref/>
+      <action>[\&amp;XML::XSH::Functions::list,[undef,'.'],1]</action>
     </production>
     <documentation>
-      <usage>list <xref linkend="xpath"/></usage>
+	<usage>list <xref linkend="xpath"/> [<xref linkend="expression"/>]</usage>
       <description>
 	<para>
-	  List the XML representation of all elements
-	  matching <xref linkend='xpath'/>.
-	  Unless in quiet mode, print number of nodes matched on stderr.
+	  List the XML representation of all nodes matching <xref
+	  linkend='xpath'/>. The optional expression argument may be
+	  provided to specify the depth of XML tree listing. If
+	  negative, the tree will be listed to arbitrary depth.
+	  Unless in quiet mode, this command prints number of nodes
+	  matched on stderr.	   
+	</para>
+        <para>
+	  If the <xref linkend="xpath"/> parameter is omitted,
+          current context node is listed to the depth of 1.
 	</para>
       </description>
       <see-also>
@@ -1796,7 +1849,7 @@ sub new {
     <production>
       <selfref/>
       <ruleref ref="ID"/>
-      <action>[\&amp;XML::XSH::Functions::set_last_id,$item[2]]</action>
+      <action>[\&amp;XML::XSH::Functions::set_local_xpath,[$item[2],"/"]]</action>
     </production>
     <documentation>
       <usage>select <xref linkend='ID'/></usage>
@@ -1987,8 +2040,7 @@ sub new {
       <description>
 	<para>
 	  Print external or internal DTD for the given document.  If
-	  no document identifier is given, the document last used in
-	  an Xpath expression or a command is used.
+	  no document identifier is given, the current document is used.
 	</para>
       </description>
       <see-also>
@@ -2012,9 +2064,8 @@ sub new {
       <description>
 	<para>
 	  Print the original document encoding string.
-	  If no document identifier is given, the document
-	  last used in an Xpath expression or a command
-	  is used.
+	  If no document identifier is given, the current document is
+	  used.
 	</para>
       </description>
     </documentation>
@@ -2035,8 +2086,8 @@ sub new {
 	<para>
 	  Try to validate the document identified with <xref
 	  linkend='ID'/> according to its DTD, report all validity
-	  errors.  If no document identifier is given, the document
-	  last used in an Xpath expression or a command is used.
+	  errors.  If no document identifier is given, the current
+	  document is used.
 	</para>
       </description>
       <see-also>
@@ -2061,8 +2112,7 @@ sub new {
 	<para>
 	  Check and report the validity of a document.  Prints "yes"
 	  if the document is valid and "no" otherwise.  If no document
-	  identifier is given, the document last used in an Xpath
-	  expression or a command is used.
+	  identifier is given, the current document is used.
 	</para>
       </description>
       <see-also>
@@ -2126,6 +2176,67 @@ sub new {
       </see-also>
     </documentation>
   </rule>
+    <rule id="chxpath_command" type="command" name="cd">
+      <aliases>
+	<alias name="chxpath"/>
+      </aliases>
+      <production>
+	<selfref/>
+	<ruleref ref="xpath"/>
+	<action>[\&amp;XML::XSH::Functions::set_local_xpath,$item[2]]</action>
+      </production>
+      <production>
+	<selfref/>
+	<action>[\&amp;XML::XSH::Functions::set_local_xpath,undef]</action>
+      </production>
+      <documentation>
+	<usage>cd [<xref linkend="xpath"/>]</usage>
+	<description>
+	  <para>Change current context node (and current document) to
+	    the first node matching the given <xref linkend="xpath"/>
+	    argument.
+          </para>
+	</description>
+      </documentation>
+    </rule>
+    <rule id="pwd_command" type="command" name="pwd">
+      <production>
+	<selfref/>
+	<action>[\&amp;XML::XSH::Functions::print_pwd]</action>
+      </production>
+      <documentation>
+	<usage>pwd</usage>
+	<description>
+	  <para>Print XPath leading to the current context node.
+	    This is equivalent to `locate .'.
+	  </para>
+	</description>
+	<see-also>
+	  <ruleref ref="locate_command"/>
+	</see-also>
+      </documentation>
+    </rule>    
+    <rule id="locate_command" type="command" name="locate">
+      <production>
+	<selfref/>
+	<ruleref ref="xpath"/>
+	<action>[\&amp;XML::XSH::Functions::locate,$item[2]]</action>
+      </production>
+      <production>
+	<selfref/>
+	<action>[\&amp;XML::XSH::Functions::locate,undef]</action>
+      </production>
+      <documentation>
+	<usage>locate <xref linkend="xpath"/></usage>
+	<description>
+	  <para>Print canonical XPaths leading to nodes matched by
+	    the <xref linkend="xpath"/> given.</para>
+	</description>
+	<see-also>
+	  <ruleref ref="pwd_command"/>
+	</see-also>
+      </documentation>
+    </rule>    
   </rules>  
 </recdescent-xml>
 

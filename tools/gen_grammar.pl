@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: gen_grammar.pl,v 1.1 2002/03/05 13:59:48 pajas Exp $
+# $Id: gen_grammar.pl,v 1.2 2002/03/14 17:32:06 pajas Exp $
 
 use strict;
 use XML::LibXML;
@@ -16,17 +16,19 @@ EOF
 }
 
 my $parser=XML::LibXML->new();
+$parser->load_ext_dtd(1);
+$parser->validation(1);
 my $doc=$parser->parse_file($ARGV[0]);
 
 my $dom=$doc->getDocumentElement();
-my ($rules)=$dom->getElementsByTagName('rules');
-my ($preamb)=$dom->getElementsByTagName('preamb');
-my ($postamb)=$dom->getElementsByTagName('postamb');
+my ($rules)=$dom->findnodes('./rules');
+my ($preamb)=$dom->findnodes('./preamb');
+my ($postamb)=$dom->findnodes('./postamb');
 
 print "# This file was automatically generated from $ARGV[0] on \n# ",scalar(localtime),"\n";
 
 print get_text($preamb,1);
-foreach my $r ($rules->getElementsByTagName('rule')) {
+foreach my $r ($rules->findnodes('./rule')) {
   print "\n  ",$r->getAttribute('id'),":\n\t   ";
   print join("\n\t  |",create_productions($r)),"\n";
 }
@@ -58,7 +60,7 @@ sub get_text {
 sub create_productions {
   my ($rule)=@_;
   return map { create_rule_production($rule,$_) }
-    $rule->getElementsByTagName('production');
+    $rule->findnodes('./production');
 }
 
 sub has_sibling {

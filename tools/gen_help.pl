@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: gen_help.pl,v 1.2 2002/03/08 18:02:52 pajas Exp $
+# $Id: gen_help.pl,v 1.3 2002/03/14 17:32:06 pajas Exp $
 
 use strict;
 use XML::LibXML;
@@ -17,10 +17,12 @@ EOF
 }
 
 my $parser=XML::LibXML->new();
+$parser->load_ext_dtd(1);
+$parser->validation(1);
 my $doc=$parser->parse_file($ARGV[0]);
 
 my $dom=$doc->getDocumentElement();
-my ($rules)=$dom->getElementsByTagName('rules');
+my ($rules)=$dom->findnodes('./rules');
 
 my $ruledoc;
 my $title;
@@ -42,20 +44,20 @@ PREAMB
 
 print "\$HELP=<<'END';\n";
 print "General notes:\n\n";
-($desc)=$dom->getElementsByTagName('description');
+($desc)=$dom->findnodes('./description');
 print_description($desc,"  ","  ") if ($desc);
 print "END\n\n";
 
-foreach my $r ($rules->getElementsByTagName('rule')) {
-  my ($ruledoc)=$r->getElementsByTagName('documentation');
+foreach my $r ($rules->findnodes('./rule')) {
+  my ($ruledoc)=$r->findnodes('./documentation');
   next unless $ruledoc;
   my $name=get_name($r);
 
   print "\$HELP{'$name'}=[<<'END'];\n";
-  ($title)=$ruledoc->getElementsByTagName('title');
+  ($title)=$ruledoc->findnodes('./title');
   print get_text($title),"\n\n" if ($title);
 
-  ($usage)=$ruledoc->getElementsByTagName('usage');
+  ($usage)=$ruledoc->findnodes('./usage');
   if ($usage) {
     print "usage:       ",get_text($usage),"\n\n";
   }
@@ -64,7 +66,7 @@ foreach my $r ($rules->getElementsByTagName('rule')) {
     print "aliases:     ",join " ",map { get_name($_) } @aliases;
     print "\n\n";
   }
-  ($desc)=$ruledoc->getElementsByTagName('description');
+  ($desc)=$ruledoc->findnodes('./description');
   if ($desc) {
     print "description:";
     print_description($desc," "," "x(13));
@@ -148,12 +150,12 @@ sub  print_description {
 	print wrap($indent,$bigindent,$t),"\n\n";
 	$indent=$bigindent;
       } elsif ($c->nodeName eq 'example') {
-	foreach (map { get_text($_) } $c->getElementsByTagName('title')) {
+	foreach (map { get_text($_) } $c->findnodes('./title')) {
 	  s/\s+/ /g;
 	  print wrap("",$bigindent,"Example:"." "x(max(1,length($bigindent)-8))."$_\n");
 	}
 	print "\n";
-	foreach (map { get_text($_) } $c->getElementsByTagName('code')) {
+	foreach (map { get_text($_) } $c->findnodes('./code')) {
 	  s/\n[ \t]+/\n$bigindent/g;
 	  s/\\\n/\\\n  /g;
 	  print "$bigindent$_\n";

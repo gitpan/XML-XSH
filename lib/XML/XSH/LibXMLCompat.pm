@@ -1,4 +1,5 @@
-# $Id: LibXMLCompat.pm,v 1.12 2003/08/07 13:56:25 pajas Exp $
+# -*- cperl -*-
+# $Id: LibXMLCompat.pm,v 1.14 2003/09/10 15:54:31 pajas Exp $
 
 package XML::XSH::LibXMLCompat;
 
@@ -150,6 +151,11 @@ sub parse_file {
   my ($class,$parser,$file)=@_;
   $class->init_parser($parser);
   return $parser->parse_file($file);
+}
+
+sub is_dtd {
+  my ($class,$node)=@_;
+  return $node->nodeType == XML::LibXML::XML_DTD_NODE()
 }
 
 sub is_xinclude_start {

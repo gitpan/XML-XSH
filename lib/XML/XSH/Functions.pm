@@ -1,7 +1,10 @@
-# $Id: Functions.pm,v 1.63 2003/08/11 14:21:11 pajas Exp $
+# -*- cperl -*-
+# $Id: Functions.pm,v 1.73 2003/09/10 15:54:09 pajas Exp $
 
 package XML::XSH::Functions;
 
+eval "no encoding";
+undef $@;
 use strict;
 no warnings;
 
@@ -15,9 +18,9 @@ use vars qw/@ISA @EXPORT_OK %EXPORT_TAGS $VERSION $REVISION $OUT $LOCAL_ID $LOCA
             $_xsh $_xpc $_parser %_nodelist @stored_variables
             $_newdoc
             $TRAP_SIGINT $TRAP_SIGPIPE $_die_on_err $_on_exit
-            %_doc %_files %_defs %_chr %_ns
+            %_doc %_files %_defs %_includes %_chr %_ns
 	    $ENCODING $QUERY_ENCODING
-	    $INDENT $BACKUPS $SWITCH_TO_NEW_DOCUMENTS
+	    $INDENT $BACKUPS $SWITCH_TO_NEW_DOCUMENTS $EMPTY_TAGS $SKIP_DTD
 	    $QUIET $DEBUG $TEST_MODE
 	    $VALIDATION $RECOVERING $PARSER_EXPANDS_ENTITIES $KEEP_BLANKS
 	    $PEDANTIC_PARSER $LOAD_EXT_DTD $PARSER_COMPLETES_ATTRIBUTES
@@ -27,12 +30,14 @@ use vars qw/@ISA @EXPORT_OK %EXPORT_TAGS $VERSION $REVISION $OUT $LOCAL_ID $LOCA
 	  /;
 
 BEGIN {
-  $VERSION='1.8';
-  $REVISION='$Revision: 1.63 $';
+  $VERSION='1.8.2';
+  $REVISION='$Revision: 1.73 $';
   @ISA=qw(Exporter);
   my @PARAM_VARS=qw/$ENCODING
 		    $QUERY_ENCODING
 		    $INDENT
+                    $EMPTY_TAGS
+                    $SKIP_DTD
 		    $BACKUPS
 		    $SWITCH_TO_NEW_DOCUMENTS
 		    $QUIET
@@ -50,6 +55,8 @@ BEGIN {
 		    $PARSER_EXPANDS_XINCLUDE
 		    $DEFAULT_FORMAT
 		    /;
+  *EMPTY_TAGS=*XML::LibXML::setTagCompression;
+  *SKIP_DTD=*XML::LibXML::skipDTD;
   @EXPORT_OK=(qw(&xsh_init &xsh &xsh_get_output
                 &xsh_set_output &xsh_set_parser
                 &set_quiet &set_debug &set_compile_only_mode
@@ -66,10 +73,12 @@ BEGIN {
   $TRAP_SIGINT=0;
   $_xml_module='XML::XSH::LibXMLCompat';
   $INDENT=1;
+  $EMPTY_TAGS=1; # no effect (reseted by XML::LibXML)
+  $SKIP_DTD=0;   # no effect (reseted by XML::LibXML)
   $BACKUPS=1;
   $SWITCH_TO_NEW_DOCUMENTS=1;
-  $ENCODING='iso-8859-2';
-  $QUERY_ENCODING='iso-8859-2';
+  $ENCODING='utf-8';
+  $QUERY_ENCODING='utf-8';
   $QUIET=0;
   $DEBUG=0;
   $TEST_MODE=0;
@@ -136,15 +145,22 @@ sub xsh_init {
     exit 1;
   }
   my $mod=$_xml_module->module();
-  *encodeToUTF8=\&{"$mod"."::encodeToUTF8"};
-  *decodeFromUTF8=\&{"$mod"."::decodeFromUTF8"};
-
+  if ($] >= 5.008) {
+    require Encode;
+    *encodeToUTF8=*Encode::decode;
+    *decodeFromUTF8=*Encode::encode;
+  } else {
+    no strict 'refs';
+    *encodeToUTF8=*{"$mod"."::encodeToUTF8"};
+    *decodeFromUTF8=*{"$mod"."::decodeFromUTF8"};
+  }
   $_parser = $_xml_module->new_parser();
-  set_load_ext_dtd(1);
-  set_validation(0);
-  set_keep_blanks(1);
 
   xpc_init();
+  xsh_rd_parser_init();
+}
+
+sub xsh_rd_parser_init {
   if (eval { require XML::XSH::Parser; }) {
     $_xsh=XML::XSH::Parser->new();
   } else {
@@ -175,6 +191,8 @@ sub set_load_ext_dtd	     { $LOAD_EXT_DTD=$_[0]; 1; }
 sub set_complete_attributes  { $PARSER_COMPLETES_ATTRIBUTES=$_[0]; 1; }
 sub set_expand_xinclude	     { $PARSER_EXPANDS_XINCLUDE=$_[0]; 1; }
 sub set_indent		     { $INDENT=$_[0]; 1; }
+sub set_empty_tags           { $EMPTY_TAGS=$_[0]; 1; }
+sub set_skip_dtd             { $SKIP_DTD=$_[0]; 1; }
 sub set_backups		     { $BACKUPS=$_[0]; 1; }
 sub set_cdonopen	     { $SWITCH_TO_NEW_DOCUMENTS=$_[0]; 1; }
 sub set_xpath_completion     { $XPATH_COMPLETION=$_[0]; 1; }
@@ -193,6 +211,8 @@ sub get_load_ext_dtd	     { $LOAD_EXT_DTD }
 sub get_complete_attributes  { $PARSER_COMPLETES_ATTRIBUTES }
 sub get_expand_xinclude	     { $PARSER_EXPANDS_XINCLUDE }
 sub get_indent		     { $INDENT }
+sub get_empty_tags           { $EMPTY_TAGS }
+sub get_skip_dtd             { $SKIP_DTD }
 sub get_backups		     { $BACKUPS }
 sub get_cdonopen	     { $SWITCH_TO_NEW_DOCUMENTS }
 sub get_xpath_completion     { $XPATH_COMPLETION }
@@ -219,7 +239,7 @@ sub xpc_init {
 			    die "Document does not exist!" unless (exists($_doc{$id}));
 			    return $_doc{$id};
 			  });
-  $_xpc->registerFunction('matches',$XML::XSH::xshNS,
+  $_xpc->registerFunctionNS('matches',$XML::XSH::xshNS,
 			  sub {
 			    die "Wrong number of arguments for function matches(string,regexp)!" if (@_!=2);
 			    my ($string,$regexp)=@_;
@@ -229,7 +249,7 @@ sub xpc_init {
 			      XML::LibXML::Boolean->True : XML::LibXML::Boolean->False;
 			    $ret;
 			  });
-  $_xpc->registerFunction('grep',$XML::XSH::xshNS,
+  $_xpc->registerFunctionNS('grep',$XML::XSH::xshNS,
 			  sub {
 			    die "Wrong number of arguments for function grep(list,regexp)!" if (@_!=2);
 			    my ($nodelist,$regexp)=@_;
@@ -238,7 +258,7 @@ sub xpc_init {
 			    use utf8; 
 			    [grep { $_->to_literal=~m{$regexp} } @$nodelist];
 			  });
-  $_xpc->registerFunction('same',$XML::XSH::xshNS,
+  $_xpc->registerFunctionNS('same',$XML::XSH::xshNS,
 			  sub {
 			    die "Wrong number of arguments for function same(node,node)!" if (@_!=2);
 			    my ($nodea,$nodeb)=@_;
@@ -261,6 +281,8 @@ sub list_flags {
   print "load_ext_dtd ".(get_load_ext_dtd() or "0").";\n";
   print "complete_attributes ".(get_complete_attributes() or "0").";\n";
   print "indent ".(get_indent() or "0").";\n";
+  print "empty_tags ".(get_empty_tags() or "0").";\n";
+  print "skip_dtd ".(get_skip_dtd() or "0").";\n";
   print ((get_backups() ? "backups" : "nobackups"),";\n");
   print (($QUIET ? "quiet" : "verbose"),";\n");
   print (($DEBUG ? "debug" : "nodebug"),";\n");
@@ -414,7 +436,7 @@ sub nodelist_vars {
 sub variables {
   no strict;
   foreach (keys %{"XML::XSH::Map::"}) {
-    out("\$$_='",${"XML::XSH::Map::$_"},"';\n") if defined(${"XML::XSH::Map::$_"});
+    out("\$$_='",fromUTF8($ENCODING,${"XML::XSH::Map::$_"}),"';\n") if defined(${"XML::XSH::Map::$_"});
   }
   return 1;
 }
@@ -423,13 +445,13 @@ sub variables {
 sub print_var {
   no strict;
   if ($_[0]=~/^\$?(.*)/) {
-    out("\$$1='",${"XML::XSH::Map::$1"},"';\n") if defined(${"XML::XSH::Map::$1"});
+    out("\$$1='",fromUTF8($ENCODING,${"XML::XSH::Map::$1"}),"';\n") if defined(${"XML::XSH::Map::$1"});
     return 1;
   }
   return 0;
 }
 
-sub echo { out((join " ",expand(@_)),"\n"); return 1; }
+sub echo { out(fromUTF8($ENCODING,join " ",expand(@_)),"\n"); return 1; }
 sub set_quiet { $QUIET=$_[0]; return 1; }
 sub set_debug { $DEBUG=$_[0]; return 1; }
 sub set_compile_only_mode { $TEST_MODE=$_[0]; return 1; }
@@ -1011,7 +1033,7 @@ sub open_doc {
   my ($id,$file)=expand @_[0,1];
   my $format;
   my $source;
-  if ($_[2]=~/open(?:(?:\s*|_|-)(HTML|XML|DOCBOOK|html|xml|docbook))?(?:(?:\s*|_|-)(FILE|file|PIPE|pipe|STRING|string))?/) {
+  if ($_[2]=~/(?:open)?(?:(?:\s*|_|-)(HTML|XML|DOCBOOK|html|xml|docbook))?(?:(?:\s*|_|-)(FILE|file|PIPE|pipe|STRING|string))?/) {
     $format = lc($1) || $DEFAULT_FORMAT;
     $source = lc($2) || 'file';
   } else {
@@ -1027,7 +1049,7 @@ sub open_doc {
     return;
   }
   if (($source ne 'file') or
-      (-f $file) or
+      (-f $file) or $file eq "-" or
       ($file=~/^[a-z]+:/)) {
     print STDERR "parsing $file\n" unless "$QUIET";
 
@@ -1048,7 +1070,7 @@ sub open_doc {
       $root_element="<$root_element/>" unless ($root_element=~/^\s*</);
       $root_element=toUTF8($QUERY_ENCODING,$root_element);
       $root_element=~s/^\s+//;
-      xsh_parse_string($root_element,$format);
+      $doc=xsh_parse_string($root_element,$format);
       set_doc($id,$doc,"new_document$_newdoc.xml");
       $_newdoc++;
     } else  {
@@ -1074,7 +1096,7 @@ sub open_doc {
 #     }
 #     return _check_err($@);
   } else {
-    die "file not exists: $file";
+    die "file not exists: $file\n";
     return 0;
   }
 }
@@ -1268,7 +1290,10 @@ sub save_doc {
     }
   } else {
     if ($format eq 'xml') {
-      if (lc($_xml_module->doc_encoding($doc)) ne lc($enc)) {
+      if (lc($_xml_module->doc_encoding($doc)) ne lc($enc)
+	  and not($_xml_module->doc_encoding($doc) eq "" and
+	  lc($enc) eq 'utf-8')
+	 ) {
 	$_xml_module->set_encoding($doc,$enc);
       }
       if ($target eq 'file') {
@@ -1285,7 +1310,12 @@ sub save_doc {
 	$doc->toFH($F,$INDENT);
 	close $F;
       } elsif ($target eq 'string') {
-	out($doc->toString($INDENT));
+	if ($file =~ /^\$?([a-zA-Z_][a-zA-Z0-9_]*)$/) {
+	  no strict qw(refs);
+	  ${"XML::XSH::Map::$1"}=$doc->toString($INDENT);
+	} else {
+	  out($doc->toString($INDENT));
+	}
       }
     } elsif ($format eq 'html') {
       my $F;
@@ -1310,7 +1340,7 @@ sub save_doc {
     }
   }
 
-  print STDERR "Document $id saved.\n" unless ($@ or "$QUIET");
+  print STDERR "Document $id written.\n" unless ($@ or "$QUIET");
   return 1;
 }
 
@@ -1318,7 +1348,8 @@ sub save_doc {
 # create start tag for an element
 
 ###
-### Workaround of a bug in XML::LibXML (no getNamespaces, getName returns prefix only,
+### Workaround of a bug in XML::LibXML:
+### getNamespaces, getName returns prefix only,
 ### prefix returns prefix not xmlns, getAttributes contains also namespaces
 ### findnodes('namespace::*') returns (namespaces,undef)
 ###
@@ -1377,7 +1408,8 @@ sub to_string {
 		'?>'."\n";
 	}
 	$result.=
-	  join("\n",map { to_string($_,$depth-1,$folding) } $node->childNodes);
+	  join("\n",map { to_string($_,$depth-1,$folding) }
+	       grep { $SKIP_DTD ? !$_xml_module->is_dtd($_) : 1 } $node->childNodes);
       } else {
 	$result=$_xml_module->toStringUTF8($node,$INDENT);
       }
@@ -1521,18 +1553,19 @@ sub eval_xpath_literal {
   my ($id,$query)=_xpath($xp);
   $_xpc->setContextNode(get_local_node($id));
   my $result = $_xpc->find(toUTF8($QUERY_ENCODING,$query));
-
   if (!ref($result)) {
-    return &fromUTF8($ENCODING, $result);
+    return $result;
   } else {
     if ($result->isa('XML::LibXML::NodeList')) {
       if (wantarray) {
-	return map { &fromUTF8($ENCODING, literal_value($_->to_literal)) } @$result;
+	return map { literal_value($_->to_literal) } @$result;
+      } elsif ($result->[0]) {
+	return literal_value($result->[0]->to_literal);
       } else {
-	return &fromUTF8($ENCODING, literal_value($result->[0]->to_literal));
+	return '';
       }
     } else {
-      return &fromUTF8($ENCODING, literal_value($result->to_literal));
+      return literal_value($result->to_literal);
     }
   }
 }
@@ -2401,36 +2434,99 @@ sub get_dtd {
 }
 
 # check document validity
-sub valid_doc {
-  my ($id)=expand @_;
+sub validate_doc {
+  my ($show_errors,$schema,$id)=@_;
+  $id=expand $id;
+  __debug("SCHEMA @$schema");
+  my @schema = expand @$schema;
+  __debug("SCHEMA @schema");
   ($id,my $doc)=_id($id);
   unless (ref($doc)) {
-    die "No such document '$id'!\n";
+    die "No such document '$id' (to validate)!\n";
   }
 
   if ($doc->can('is_valid')) {
-    out(($doc->is_valid() ? "yes\n" : "no\n"));
+    if (@schema) {
+      my $type = shift @schema;
+      my $format = shift @schema;
+      if ($type eq 'DTD') {
+	my $dtd;
+	eval { XML::LibXML::Dtd->can('new') } ||
+	  die "DTD validation not supported by your version of XML::LibXML\n";
+	if ($format eq 'FILE') {
+	  __debug("PUBLIC $schema[0], SYSTEM $schema[1]");
+	  $dtd=XML::LibXML::Dtd->new(@schema);
+	  __debug($dtd);
+	} elsif ($format eq 'STRING') {
+	  __debug("STRING $schema[0]");
+	  $dtd=XML::LibXML::Dtd->parse_string($schema[0]);
+	  __debug($dtd);
+	  __debug($dtd->toString());
+	} else {
+	  die "Unknown DTD format '$format!'\n";
+	}
+	if ($show_errors) {
+	  $doc->validate($dtd);
+	} else {
+	  out(($doc->is_valid($dtd) ? "yes\n" : "no\n"));
+	}
+      } elsif ($type eq 'RNG') {
+	eval { XML::LibXML::RelaxNG->can('new') } ||
+	  die "RelaxNG validation not supported by your version of XML::LibXML\n";
+	my $rng;
+	if ($format eq 'FILE') {
+	  $rng=XML::LibXML::RelaxNG->new(location => $schema[0]);
+	} elsif ($format eq 'STRING') {
+	  $rng=XML::LibXML::RelaxNG->new(string => $schema[0]);
+	} elsif ($format eq 'DOC') {
+	  my $rngdoc=_doc($schema[0]);
+	  unless (ref($rngdoc)) {
+	    die "No such document '$schema[0]'!\n";
+	  }
+	  $rng=XML::LibXML::RelaxNG->new(DOM => $rngdoc);
+	} else {
+	  die "Unknown RelaxNG format '$format!'\n";
+	}
+	eval { $rng->validate($doc) };
+	if ($show_errors) {
+	  die "$@\n";
+	} else {
+	  out($@ ? "no\n" : "yes\n");
+	}
+      } elsif ($type eq 'XSD') {
+	eval { XML::LibXML::Schema->can('new') } ||
+	  die "Schema validation not supported by your version of XML::LibXML\n";
+	my $xsd;
+	if ($format eq 'FILE') {
+	  $xsd=XML::LibXML::Schema->new(location => $schema[0]);
+	} elsif ($format eq 'STRING') {
+	  $xsd=XML::LibXML::Schema->new(string => $schema[0]);
+	} elsif ($format eq 'DOC') {
+	  my $xsddoc=_doc($schema[0]);
+	  unless (ref($xsddoc)) {
+	    die "No such document '$schema[0]'!\n";
+	  }
+	  $xsd=XML::LibXML::Schema->new(string => $xsddoc->toString());
+	} else {
+	  die "Unknown Schema format '$format!'\n";
+	}
+	eval { $xsd->validate($doc) };
+	if ($show_errors) {
+	  die "$@\n";
+	} else {
+	  out($@ ? "no\n" : "yes\n");
+	}
+      }
+    } else {
+      if ($show_errors) {
+	$doc->validate();
+      } else {
+	out(($doc->is_valid() ? "yes\n" : "no\n"));
+      }
+    }
   } else {
     die("Vaidation not supported by ",ref($doc));
   }
-
-  return 1;
-}
-
-# validate document
-sub validate_doc {
-  my ($id)=expand @_;
-  ($id, my $doc)=_id($id);
-  unless (ref($doc)) {
-    die "No such document '$id'!\n";
-  }
-
-  if ($doc->can('validate')) {
-    $doc->validate();
-  } else {
-    die("Vaidation not supported by ",ref($doc));
-  }
-
   return 1;
 }
 
@@ -2468,6 +2564,28 @@ sub print_enc {
     die "No such document '$id'!\n";
   }
   out($_xml_module->doc_encoding($doc),"\n");
+  return 1;
+}
+
+sub set_doc_enc {
+  my ($encoding,$id)=expand @_;
+  ($id, my $doc)=_id($id);
+  unless (ref($doc)) {
+    die "No such document '$id'!\n";
+  }
+  $_xml_module->set_encoding($doc,$encoding);
+  return 1;
+}
+
+sub set_doc_standalone {
+  my ($standalone,$id)=expand @_;
+  ($id, my $doc)=_id($id);
+  unless (ref($doc)) {
+    die "No such document '$id'!\n";
+  }
+  $standalone=1 if $standalone=~/yes/i;
+  $standalone=0 if $standalone=~/no/i;
+  $_xml_module->set_standalone($doc,$standalone);
   return 1;
 }
 
@@ -3073,8 +3191,13 @@ sub load {
 
 # call XSH to evaluate commands from a given file
 sub include {
-  my $l=load(expand $_[0]);
-  return $_xsh->startrule($l);
+  my $f=expand(shift);
+  my $conditionally = shift;
+  if (!$conditionally || !$_includes{$f}) {
+    $_includes{$f}=1;
+    my $l=load($f);
+    return $_xsh->startrule($l);
+  }
 }
 
 # print help
@@ -3153,34 +3276,49 @@ sub stream_process_node {
 
 sub stream_process {
   my ($itype, $input, $otype, $output, $process)=@_;
+  ($input,$output)=expand($input,$output);
   require XML::Filter::DOMFilter::LibXML;
   require XML::LibXML::SAX;
   require XML::SAX::Writer;
 
   my $out;
+  my $termout;
   my $i=1;
   $i++ while (exists($_doc{"_stream_$i"}));
   if ($otype =~ /pipe/i) {
     open $out,"| $output";
     $out || die "Cannot open pipe to $output\n";
   } elsif ($otype =~ /string/i) {
-    $out = $OUT;
+    if ($output =~ /^\$?([a-zA-Z_][a-zA-Z0-9_]*)$/) {
+      no strict qw(refs);
+      $out=\${"XML::XSH::Map::$1"};
+    } elsif (ref($OUT)=~/Term::ReadLine/) {
+      $out = *$OUT;
+      $termout=1;
+    } else {
+      $out = $OUT;
+      $termout=1;
+    }
   } else {
     $out = $output;
   }
   my $parser=XML::LibXML::SAX
     ->new( Handler =>
 	   XML::Filter::DOMFilter::LibXML
-	   ->new(Handler => XML::SAX::Writer::XML->new( Output => $out,
-							Writer => 'XML::SAX::Writer::XMLEnc'
-						      ),
+	   ->new(Handler =>
+		 XML::SAX::Writer::XML
+		 ->new(
+		       Output => $out,
+		       Writer => 'XML::SAX::Writer::XMLEnc'
+		      ),
 		 XPathContext => $_xpc,
 		 Process => [
 			     map {
 			       $_->[0] => [\&stream_process_node,$_->[1],
 					   $input,"_stream_$i"] }
 			     @$process
-			    ])
+			    ]
+		)
 	 );
   if ($itype =~ /pipe/i) {
     open my $F,"$input|";
@@ -3188,13 +3326,15 @@ sub stream_process {
     $parser->parse_fh($F);
     close $F;
   } elsif ($itype =~ /string/i) {
-    xsh_parse_string($input);
+    $parser->parse_string($input);
   } else  { #file
     $parser->parse_uri($input);
   }
   if ($otype =~ /pipe/i) {
     close($out);
   }
+  if ($termout) { out("\n"); }
+  return 1;
 }
 
 sub iterate {
@@ -3375,8 +3515,7 @@ sub xml_list {
   my $ql=&XML::XSH::Functions::find_nodes([$id,$query]);
   my $result='';
   foreach (@$ql) {
-    $result.=&XML::XSH::Functions::fromUTF8($XML::XSH::Functions::_encoding,
-					    $_->toString());
+    $result.=$_->toString();
   }
   return $result;
 }
@@ -3385,7 +3524,7 @@ sub literal {
   my ($xp)=@_;
   my $xp=$_[0];
   $xp=~/^(?:([a-zA-Z_][a-zA-Z0-9_]*):(?!:))?((?:.|\n)*)$/;
-  return &XML::XSH::Functions::eval_xpath_literal([$1,$2]);
+  return XML::XSH::Functions::eval_xpath_literal([$1,$2]);
 }
 
 sub type {

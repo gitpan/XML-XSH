@@ -35,6 +35,8 @@ documents
 dtd
 dup
 echo
+empty-tags
+empty_tags
 enc
 encoding
 eval
@@ -48,6 +50,7 @@ foreach
 get
 help
 if
+ifinclude
 include
 indent
 insert
@@ -119,6 +122,10 @@ run_mode
 save
 sed
 select
+set-enc
+set-standalone
+skip-dtd
+skip_dtd
 sort
 stream
 strip-whitespace
@@ -173,6 +180,7 @@ local
 options
 flags
 defs
+ifinclude
 include
 \.
 call
@@ -214,6 +222,8 @@ create
 new
 save
 dtd
+set-enc
+set-standalone
 enc
 validate
 valid

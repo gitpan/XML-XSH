@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- cperl -*-
 
-# $Id: xsh,v 1.29 2003/08/11 14:18:57 pajas Exp $
+# $Id: xsh,v 1.32 2003/09/10 13:35:31 pajas Exp $
 
 use FindBin;
 use lib ("$FindBin::RealBin", "$FindBin::RealBin/../lib",
@@ -16,11 +16,11 @@ use strict;
 #use Getopt::Std;
 use Getopt::Long;
 use Pod::Usage;
-use vars qw/$opt_q $opt_w $opt_i $help $opt_V $opt_E $opt_e $opt_d $opt_c $opt_s
-            $opt_f $opt_g $opt_v $opt_t $opt_T $opt_a $opt_l $opt_n $opt_p $opt_P
-	    $usage $manpage $opt_HTML $opt_XML
-	    /;
-use vars qw/$VERSION $REVISION/;
+use vars qw($opt_q $opt_w $opt_i $help $opt_V $opt_E $opt_e $opt_d
+            $opt_c $opt_s $opt_f $opt_g $opt_v $opt_t $opt_T $opt_a
+            $opt_l $opt_n $opt_p $opt_P $usage $manpage $opt_HTML
+            $opt_XML $input $output $process $format);
+use vars qw($VERSION $REVISION);
 
 use IO::Handle;
 
@@ -36,12 +36,16 @@ BEGIN {
 			 "compile|c" => \$opt_c,
 			 "quiet|q" => \$opt_q,
 			 "validation|v" => \$opt_v,
+			 "format" => \$format,
 			 "no-validation|w" => \$opt_w,
 			 "debug|d" => \$opt_d,
 			 "no-init|f" => \$opt_f,
 			 "help|h" => \$help,
 			 "version|V" => \$opt_V,
 			 "interactive|i" => \$opt_i,
+			 "input|I=s" => \$input,
+			 "output|O=s" => \$output,
+			 "process|P=s" => \$process,
 			 "non-interactive|n" => \$opt_n,
 			 "pipe|p" => \$opt_p,
 			 "html|H" => \$opt_HTML,
@@ -55,8 +59,13 @@ BEGIN {
 			) or $usage=1;
 #  getopts('atscqvwdfhVinTE:e:l:pP');
   $VERSION='0.12';
-   $REVISION='$Revision: 1.29 $';
+   $REVISION='$Revision: 1.32 $';
   $ENV{PERL_READLINE_NOWARN}=1;
+}
+
+if ($opt_P and ($input or $output)) {
+  print STDERR "Options -P is incompatible with -I and -O!\n";
+  $usage=1;
 }
 
 # Help and usage
@@ -73,7 +82,7 @@ if ($manpage) {
 
 my $string;
 if ($opt_a) {
-  @XML::XSH::ARGV=@ARGV;
+  @XML::XSH::Map::ARGV=@ARGV;
 } else {
   $string=join " ",@ARGV;
 }
@@ -140,11 +149,19 @@ if ($opt_w) {
   XML::XSH::Functions::set_complete_attributes(1);
 }
 
+if ($format) {
+  XML::XSH::Functions::set_keep_blanks(0);
+  XML::XSH::Functions::set_indent(1);
+  print "FORMAT: $XML::XSH::Map::INDENT $XML::XSH::Map::KEEP_BLANKS\n";
+}
+
 my $l;
 
 eval {
-  if (-r "$ENV{HOME}/.xshrc") {
-    open INI,"$ENV{HOME}/.xshrc" || die "cannot open $ENV{HOME}/.xshrc";
+  my $ini = "$ENV{HOME}/.xshrc";
+  if (-r $ini) {
+    open INI, $ini || die "cannot open $ini";
+    $XML::XSH::Functions::_includes{$ini}=1;
     xsh(join("",<INI>));
     close INI;
   }
@@ -173,7 +190,23 @@ if ($opt_i) {
   $XML::XSH::Functions::_die_on_err=1;
 }
 
-xsh("open _=-") if ($opt_p);
+if ($process ne "") {
+  $input=$process;
+  $output=$process;
+}
+
+if ($opt_p) {
+  $input  ||= '-';
+  $output ||= '-';
+}
+
+foreach ($input, $output) {
+  s(\\)(\\\\)g;
+  s(')(\\')g;
+}
+
+print STDERR "open _='$input'\n" if $opt_d;
+xsh("open _='$input'") if ($input);
 
 if ($string) {
   print "xsh> $string\n" if ($opt_i and not $opt_q);
@@ -259,7 +292,7 @@ if ($opt_i) {
   xsh(join "",<STDIN>);
 }
 
-xsh("save _ -") if ($opt_p);
+xsh("save _ '$output'") if ($output);
 
 # get a line of input from ReadLine
 # if ^C interruption by user occures return $retonint
@@ -286,6 +319,7 @@ sub prompt {
   return 'xsh '.xsh_local_id().":".xsh_pwd().'> ';
 }
 
+
 __END__
 
 
@@ -298,6 +332,8 @@ xsh - XML Editing Shell
   xsh [options] commands
   xsh [options] -al script [arguments ...]
   xsh [options] -p commands < input.xml > output.xml
+  xsh [options] -I input.xml -O output.xml commands
+  xsh [options] -P file.xml commands
 
   xsh -u          for usage
   xsh -h          for help
@@ -322,7 +358,7 @@ Type C<xsh help commands> to get list of available XSH commands and
 C<xsh help B<command>> with B<command> replaced by a XSH command name
 to get help on a particular command.
 
-=head1 COMMAND-LINE OPTIONS
+=head1 OPTIONS
 
 =over 8
 
@@ -335,7 +371,7 @@ other commands provided on the command-line, but after executed
 =item B<--arguments|-a>
 
 Command-line contains arguments accessible to the script via
-C<@XSH::Map::ARGV> rather than XSH commands.
+C<@XML::XSH::Map::ARGV> rather than XSH commands.
 
 =item B<--stdin|-t>
 
@@ -350,6 +386,11 @@ actually executed.
 =item B<--quiet|-q>
 
 Quiet mode: suppress all unnecessary informatory ouptut.
+
+=item B<--format>
+
+Start with indent 1 (on) and keep_blanks 0 (off)
+to allow nice indenting of the XML output.
 
 =item B<--validation|-v>
 
@@ -390,6 +431,19 @@ tool.  In this mode, first the standard input is read and opened as a
 document _ (underscore), then all XSH commands given in ~/.xshrc,
 command-line and given XSH scripts are applied and finally the
 (possibly modified) document _ is dumped back on the standard output.
+It is equivallent to C<-I - -O -> and C<-P ->.
+
+=item B<--input|-I> filename
+
+Preload given file as a document with ID _ upon startup.
+
+=item B<--output|-O> filename
+
+Try to saves document with ID _ into given file before XSH ends.
+
+=item B<--process|-P> filename
+
+A convenient shortcut for C<-I filename -O filename>.
 
 =item B<--html|-H>
 

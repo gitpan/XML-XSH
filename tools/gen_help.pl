@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: gen_help.pl,v 1.11 2003/08/07 13:59:30 pajas Exp $
+# $Id: gen_help.pl,v 1.12 2003/09/10 13:47:24 pajas Exp $
 
 use strict;
 use XML::LibXML;
@@ -110,8 +110,8 @@ foreach my $r ($rules->findnodes('./rule')) {
   }
   @seealso=grep {defined($_)} $ruledoc->findnodes('./see-also/ruleref');
   if (@seealso) {
-    print "see also:     ",join " ", grep {defined($_)}
-      map { $_->getAttribute('ref') } @seealso;
+    print "see also:     ",join " ", map { get_name($_) }# grep {defined($_)}
+      map { $_->findnodes('id(@ref)') } @seealso;
     print "\n\n";
   }
 

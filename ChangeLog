@@ -1,3 +1,163 @@
+2003-09-10  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/CompletionList.pm, lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm, lib/XML/XSH/Parser.pm:
+	regenerated
+
+	* lib/XML/XSH/LibXMLCompat.pm: added is_dtd
+
+	* lib/XML/XSH/Functions.pm: empty-tags, skipt-dtd fixes
+
+	* src/xsh_grammar.xml: added empty-tags, skipt-dtd
+
+	* Changes, lib/XML/XSH/Functions.pm: prepare for a release
+
+	* lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm: regenerated
+
+	* tools/gen_doc.xsh:
+	sort command and argument-type sections alphabetically
+
+	* src/xsh_grammar.xml: docu fix
+
+	* Changes, MANIFEST, lib/XML/XSH/CompletionList.pm, lib/XML/XSH/Functions.pm, lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm, lib/XML/XSH/Parser.pm:
+	update
+
+	* TODO: *** empty log message ***
+
+	* tools/gen_help.pl: see also fixed
+
+	* src/xsh_grammar.xml: - preliminary support RelaxNG and XSD validation
+	- ifinclude
+
+	* lib/XML/XSH/Functions.pm: - remember includes and implement includeif
+	- overall encoding fixes (mostly affecting echo)
+	- more powerful DTD validation
+	- preliminary support RelaxNG and XSD validation
+
+	* lib/XML/XSH/Completion.pm:
+	fixed preceding-or-self to preceding-sibling
+
+	* xsh: - --format, --input, --output, --process added
+	- apply new Functions mechanism of remembering included files on .xshrc
+
+2003-09-10  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* Changes, lib/XML/XSH/Functions.pm: prepare for a release
+
+	* lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm: regenerated
+
+	* tools/gen_doc.xsh:
+	sort command and argument-type sections alphabetically
+
+	* src/xsh_grammar.xml: docu fix
+
+	* Changes, MANIFEST, lib/XML/XSH/CompletionList.pm, lib/XML/XSH/Functions.pm, lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm, lib/XML/XSH/Parser.pm:
+	update
+
+	* TODO: *** empty log message ***
+
+	* tools/gen_help.pl: see also fixed
+
+	* src/xsh_grammar.xml: - preliminary support RelaxNG and XSD validation
+	- ifinclude
+
+	* lib/XML/XSH/Functions.pm: - remember includes and implement includeif
+	- overall encoding fixes (mostly affecting echo)
+	- more powerful DTD validation
+	- preliminary support RelaxNG and XSD validation
+
+	* lib/XML/XSH/Completion.pm:
+	fixed preceding-or-self to preceding-sibling
+
+	* xsh: - --format, --input, --output, --process added
+	- apply new Functions mechanism of remembering included files on .xshrc
+
+2003-09-08  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/Inline/XSH.pm: initial commit
+
+	* lib/XML/XSH.pm: POD fixes
+
+2003-08-25  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/Functions.pm:
+	echo, vars, and $var encode values into $ENCODING
+
+	* lib/XML/XSH/CompletionList.pm, lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm, lib/XML/XSH/Parser.pm:
+	regenerated
+
+	* src/xsh_grammar.xml: - set-enc, set-standalone added
+	- docu fixes
+
+	* lib/XML/XSH/Functions.pm: - fixed strict refs
+
+	* lib/XML/XSH/Functions.pm:
+	allow set_doc_standalone to be specified as yes/no
+
+	* lib/XML/XSH/LibXMLCompat.pm: - added emacs' -*- cperl -*-
+
+	* lib/XML/XSH/Functions.pm: - fixed perl5.8 encoding problem
+	- added quick implementation of EMPTY_TAGS, SKIP_DTD
+	- fixed buggy registering xsh:* XPath extensions
+	- don't force utf-8 encoding on files without encoding specified in
+	  xml declaration
+	- implemented set_doc_enc, set_doc_standalone
+
+	* Makefile.PL: Force C locales when building Parser.pm from Grammar.pm
+	(don't know why but I getting errors otherwise)
+
+2003-08-19  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* src/xsh_grammar.xml: fixed documentation for strip-whitespace
+
+	* xsh: fixed namespace for ARGV
+
+2003-08-13  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* Makefile.PL: updated requred version of Parse::RecDescent
+
+	* lib/XML/XSH/Functions.pm: allow - as a filename
+
+	* xsh: renamed POD chapter to make Pod::Usage display options on --help
+
+	* lib/XML/XSH/Functions.pm: - fixed open STRING
+	- fixed stream input STRING
+	- stream output STRING 'foo' (or \$foo or '$foo', etc.) now saves
+	  the output to the string
+	- stream output STRING '' writes the output on the terminal
+
+	* src/xsh_grammar.xml:
+	- added open example for opening file from http:// URL
+
+2003-08-12  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* Changes: update
+
+2003-08-11  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* Makefile.PL: added LibXSLT requirement
+
+	* ChangeLog: updated
+
+	* lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm, lib/XML/XSH/Parser.pm:
+	regenerated
+
+	* tools/gen_pod.pl: initial commit
+
+	* t/01basic.t, t/02gdome.t, t/03copy.t, t/04flow.t, t/05misc.t:
+	removed SIGSEGV_SAFE
+
+	* Makefile.PL:
+	removed building .tar.gz package for ppd distribution (has to be done
+	on windows anyway for some reason)
+
+	* tools/chunk.xsl: use.id.as.filename=1
+
+	* lib/XML/XSH/Functions.pm: workarounds for RH's buggy perl5.8
+
+	* xsh: -l also disables implicit interactive mode
+
+	* Makefile.PL: added winppd target
+
 2003-08-11  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
 
 	* lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm, lib/XML/XSH/Parser.pm:

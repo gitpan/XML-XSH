@@ -1,4 +1,4 @@
-# $Id: XSH.pm,v 1.11 2003/08/08 14:02:47 pajas Exp $
+# $Id: XSH.pm,v 1.12 2003/09/08 15:52:58 pajas Exp $
 
 package XML::XSH;
 
@@ -71,16 +71,12 @@ Initialize the XSH language parser and interpreter.
 
 Execute commands in XSH language.
 
-=head2 EXPORT
-
-None.
-
 =head1 AUTHOR
 
 Petr Pajas, pajas@matfyz.cz
 
 =head1 SEE ALSO
 
-L<xsh> L<XSH> L<XML::LibXML>, L<XML::XUpdate>
+L<xsh>, L<XSH>, L<XML::LibXML>, L<XML::XUpdate>
 
 =cut

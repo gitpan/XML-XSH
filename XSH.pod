@@ -1,6 +1,6 @@
 =for comment
   This file was automatically generated from src/xsh_grammar.xml
-  on Fri Aug  8 16:12:51 2003
+  on Wed Sep 10 17:53:04 2003
 
 =head1 NAME
 
@@ -139,7 +139,7 @@ Example: Using string variables to convert between different types of nodes
 
 =head2 RELATED COMMANDS
 
-clone, copy, insert, map, move, normalize, process-xinclude, remove, rename, strip-whitespace, xcopy, xinsert, xmove, xslt, xupdate
+clone, copy, insert, map, move, normalize, process-xinclude, remove, rename, set-enc, set-standalone, strip-whitespace, xcopy, xinsert, xmove, xslt, xupdate
 
 
 =head1 FLOW CONTROL
@@ -152,7 +152,7 @@ Most notable XSH's feature in this area is that some of the basic flow control s
 
 =head2 RELATED COMMANDS
 
-call, def, exit, foreach, if, include, iterate, last, next, prev, redo, return, run-mode, stream, test-mode, throw, try, undef, unless, while
+call, def, exit, foreach, if, ifinclude, include, iterate, last, next, prev, redo, return, run-mode, stream, test-mode, throw, try, undef, unless, while
 
 
 =head1 RETRIEVING MORE INFORMATION
@@ -283,7 +283,7 @@ Example:
 
 =head2 RELATED COMMANDS
 
-backups, debug, encoding, indent, keep-blanks, load-ext-dtd, nobackups, nodebug, options, parser-completes-attributes, parser-expands-entities, parser-expands-xinclude, pedantic-parser, query-encoding, quiet, recovering, register-function, register-namespace, register-xhtml-namespace, register-xsh-namespace, run-mode, switch-to-new-documents, test-mode, unregister-function, unregister-namespace, validation, verbose, xpath-axis-completion, xpath-completion
+backups, debug, empty-tags, encoding, indent, keep-blanks, load-ext-dtd, nobackups, nodebug, options, parser-completes-attributes, parser-expands-entities, parser-expands-xinclude, pedantic-parser, query-encoding, quiet, recovering, register-function, register-namespace, register-xhtml-namespace, register-xsh-namespace, run-mode, skip-dtd, switch-to-new-documents, test-mode, unregister-function, unregister-namespace, validation, verbose, xpath-axis-completion, xpath-completion
 
 
 =head1 INTERACTING WITH PERL AND SHELL
@@ -674,13 +674,13 @@ cp
 
 =item Description:
 
-Copies nodes matching the first B<xpath> to the destinations determined by the B<location> directive relative to the second B<xpath>. If more than one node matches the first B<xpath> than it is copied to the position relative to the corresponding node matched by the second B<xpath> according to the order in which are nodes matched. Thus, the n'th node matching the first B<xpath> is copied to the location relative to the n'th node matching the second B<xpath>. The possible values for B<location> are: after, before, into, replace and cause copying the source nodes after, before, into (as the last child-node). the destination nodes. If replace B<location> is used, the source node is copied before the destination node and the destination node is removed.
+Copies nodes matching the first B<xpath> to the destinations determined by the B<location> directive relative to the second B<xpath>. If more than one node matches the first B<xpath> than it is copied to the position relative to the corresponding node matched by the second B<xpath> according to the order in which are nodes matched. Thus, the n'th node matching the first B<xpath> is copied to the location relative to the n'th node matching the second B<xpath>.
+
+The possible values for B<location> are: after, before, into, replace and cause copying the source nodes after, before, into (as the last child-node). the destination nodes. If replace B<location> is used, the source node is copied before the destination node and the destination node is removed.
 
 Some kind of type conversion is used when the types of the source and destination nodes are not equal. Thus, text, cdata, comment or processing instruction node data prepend, append or replace value of a destination attribute when copied before,afterE<sol>into or instead (replace) an attribute, and vice versa.
 
-Attributes may be copied after, before or into some other attribute to append, prepend or replace the destination attribute value. They may also replace the destination attribute completely (both its name and value).
-
-To simply copy an attribute from one element to another, simply copy the attribute node into the destination element.
+Attributes may be copied after, before or into some other attribute to append, prepend or replace the destination attribute value. They may also replace the destination attribute completely (both its name and value). To copy an attribute from one element to another, simply copy the attribute node into the destination element.
 
 Elements may be copied into other elements (which results in appending the child-list of the destination element), or before, after or instead (replace) other nodes of any type except attributes.
 
@@ -957,6 +957,12 @@ In the present implementation, this command displays information provided in the
 
 
 
+=item See also:
+
+set_enc_command set_standalone_command
+
+
+
 =back
 
 
@@ -1027,6 +1033,38 @@ valid_command validate_command
 
 
 
+=head2 empty-tags
+
+
+
+=over 4
+
+
+
+=item Usage:
+
+empty-tags B<expression>
+             
+
+
+=item Aliases:
+
+empty_tags
+
+
+
+=item Description:
+
+If the value of B<expression> is 1 (non-zero), empty tags are serialized as a start-tagE<sol>end-tag pair (B<E<lt>fooE<gt>E<lt>E<sol>fooE<gt>>). This option affects both B<ls> and B<save> and possibly other commands. Otherwise, they are compacted into a short-tag form (B<E<lt>fooE<sol>E<gt>>). Default value is B<0>.
+
+This command is equivalent to setting the B<$EMPTY_TAGS> variable.
+
+
+
+=back
+
+
+
 =head2 enc
 
 
@@ -1044,6 +1082,12 @@ enc [B<id>]
 =item Description:
 
 Print the original document encoding string. If no document identifier is given, the current document is used.
+
+
+
+=item See also:
+
+set_enc_command
 
 
 
@@ -1308,6 +1352,36 @@ Example: Display node type
 
 
 
+=head2 ifinclude
+
+
+
+=over 4
+
+
+
+=item Usage:
+
+ifinclude B<filename>
+             
+
+
+=item Description:
+
+Include a file named B<filename> and execute all XSH commands therein unless the file was already included using either B<include> of B<ifinclude>.
+
+
+
+=item See also:
+
+include_command
+
+
+
+=back
+
+
+
 =head2 include
 
 
@@ -1331,6 +1405,12 @@ include B<filename>
 =item Description:
 
 Include a file named B<filename> and execute all XSH commands therein.
+
+
+
+=item See also:
+
+ifinclude_command
 
 
 
@@ -1925,13 +2005,15 @@ B<normalize> puts all text nodes in the full depth of the sub-tree underneath ea
 
 =item Description:
 
-Load a new XML, HTML or SGML DOCBOOK document from the file, URI, command output or string provided by the B<expression>. In XSH the document is given a symbolic name B<id>. To identify the documentin commands like close, save, validate, dtd or enc simply use B<id>. In commands which work on document nodes, give B<id>: prefix to XPath expressions to point the XPath to the document.
+Load a new XML, HTML or SGML DOCBOOK document from the file (actually arbitrary URL), command output or string provided by the B<expression>. In XSH the document is given a symbolic name B<id>. To identify the documentin commands like close, save, validate, dtd or enc simply use B<id>. In commands which work on document nodes, give B<id>: prefix to XPath expressions to point the XPath to the document.
 
 Example:
 
   
   xsh> open x=mydoc.xml # open a document
   
+  # open a HTML document from the Internet
+  xsh> open HTML h="http://www.google.com/?q=xsh"
   # quote file name if it contains whitespace
   xsh> open y="document with a long name with spaces.xml"
   
@@ -2696,7 +2778,11 @@ test_mode
 
 =item Usage:
 
-save [HTMLE<verbar>XMLE<verbar>XInclude]? [FILEE<verbar>PIPEE<verbar>STRING]? B<id> B<expression>? [encoding B<enc-string>]
+save [HTMLE<verbar>XMLE<verbar>XInclude] [FILEE<verbar>PIPEE<verbar>STRING] B<id> B<expression> [encoding B<enc-string>]
+or
+    save B<id>
+or
+    save
              
 
 
@@ -2757,6 +2843,110 @@ Example:
   xsh> select b           # does nothing except selecting b
   xsh> ls /               # lists b
   
+
+
+
+=back
+
+
+
+=head2 set-enc
+
+
+
+=over 4
+
+
+
+=item Usage:
+
+set-enc B<enc-string> [B<id>]
+             
+
+
+=item Description:
+
+Changes character encoding of a given document. If no document B<id> is given, the command applies to the current document. This has two effects: changing the XMLDecl encoding declaration in the document prolog to display the new encoding and making all future B<save> operations on the document default to the given charset.
+
+Example:
+
+  xsh> ls
+  <?xml version="1.0" encoding="iso-8859-1"?>
+  <foo>...</foo>
+  xsh> set-enc "utf-8"
+  xsh> ls
+  <?xml version="1.0" encoding="utf-8"?>
+  <foo>...</foo>
+  xsh> save # saves the file in UTF-8 encoding
+  
+
+
+
+=item See also:
+
+print_enc_command doc_info_command
+
+
+
+=back
+
+
+
+=head2 set-standalone
+
+
+
+=over 4
+
+
+
+=item Usage:
+
+set-standalone B<expression> [B<id>]
+             
+
+
+=item Description:
+
+Changes the value of B<standalone> declaration in the XMLDecl prolog of a document. The B<expression> should evaluate to either 1 or 0 or B<'yes'> or B<'no'>. The result of applying the command on other values is not specified. If no document B<id> is given, the command applies to the current document.
+
+
+
+=item See also:
+
+doc_info_command
+
+
+
+=back
+
+
+
+=head2 skip-dtd
+
+
+
+=over 4
+
+
+
+=item Usage:
+
+skip-dtd B<expression>
+             
+
+
+=item Aliases:
+
+skip_dtd
+
+
+
+=item Description:
+
+If the value of B<expression> is 1 (non-zero), DTD DOCTYPE declaration is omitted from any serialization of XML documents (including B<ls> and B<save>). Default value is B<0>.
+
+This command is equivalent to setting the B<$SKIP_DTD> variable.
 
 
 
@@ -2864,7 +3054,7 @@ strip_whitespace
 
 =item Description:
 
-B<strip> removes all leading and trailing whitespace from given nodes. If applied to an element node, it removes all leading and trailing child text nodes and CDATA sections that consist entirely of whitespace.
+B<strip-whitespace> removes all leading and trailing whitespace from given nodes. If applied to an element node, it removes all leading and trailing child text nodes and CDATA sections that consist entirely of whitespace.
 
 
 
@@ -3193,13 +3383,13 @@ Unregisters given namespace prefix previously registered using B<register-namesp
 
 =item Usage:
 
-valid [B<id>]
+valid [validation-scheme] [B<id>]
              
 
 
 =item Description:
 
-Check and report the validity of a document. Prints "yes" if the document is valid and "no" otherwise. If no document identifier is given, the current document is used.
+Check and report the validity of the document B<id> with respect to a DTD, RelaxNG, or XSD schemas specified in B<validation-scheme> (see B<validate> for information, on how B<validation-scheme> may be specified). Prints "yes" if the document is valid and "no" otherwise. If no document identifier is given, the current document is used. If no B<validation-scheme> is specified, the validity against the DTD subset is checked.
 
 
 
@@ -3224,12 +3414,43 @@ validate_command list_dtd_command
 =item Usage:
 
 validate [B<id>]
+or
+validate DTD PUBLIC B<expression> [SYSTEM B<filename>] B<id>
+or
+validate (DTDE<verbar>RelaxNGE<verbar>XSD) FILE B<filename> [B<id>]
+or
+validate (DTDE<verbar>RelaxNGE<verbar>XSD) STRING B<filename> [B<id>]
+or
+validate (RelaxNGE<verbar>XSD) DOC B<id> [B<id>]
              
 
 
 =item Description:
 
-Try to validate the document identified with B<id> according to its DTD, report all validity errors. If no document identifier is given, the current document is used.
+This command validates the document identified with B<id> against a DTD, RelaxNG or XSD schema and report all validity errors. If no document identifier is given, the current document is used. A DTD can be specified either by its PUBLIC or SYSTEM identifier (or both), or as a STRING. RelaxNG and XSD schemas can be specified either as a filename or url (FILE B<filename>), as a string (STRING B<expression>), or as a XSH document (DOC B<id>). If no schema is specified, validation is performed against the internal or external DTD subset of the document being validated.
+
+Example:
+
+  open mydoc="test.xml"
+  # in all examples below, mydoc can be ommited
+  validate mydoc; # validate against the documet's DOCTYPE
+  validate DTD PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" mydoc
+  validate DTD SYSTEM "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" mydoc
+  validate DTD FILE "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" mydoc
+
+Example:
+
+  validate RelaxNG FILE "test.rng" mydoc
+  validate RelaxNG STRING $relaxschema mydoc
+  open rng="test.rng"
+  validate RelaxNG DOC rng mydoc
+
+Example:
+
+  validate XSD FILE "test.xsd" mydoc
+  validate XSD STRING $xsdschema mydoc
+  open xsd="test.xsd"
+  validate XSD DOC xsd mydoc
 
 
 
@@ -3744,7 +3965,7 @@ Example:
 
 =item B<filename>
 
-An B<expression> which interpolates to a valid file name.
+An B<expression> which interpolates to a valid file name or URL.
 
 
 
@@ -3815,7 +4036,7 @@ B<xsh:doc(id-string)> - returns a nodelist consisting of the document node assoc
 
 B<xsh:matches(match-string,regexp-string)> - returns B<true> if B<match-string> matches the regular expression given in B<regexp-string>. Otherwise returns B<false>.
 
-B<xsh:grep(node-set, regexp-string)> - returns a node set consisting of nodes of the given B<node-set> whose content (as returned by the built-in XPath function B<string()> matches the regular expression given in B<regexp-string>.
+B<xsh:grep(node-set, regexp-string)> - returns a node set consisting of nodes of the given B<node-set> whose content (as returned by the built-in XPath function B<string()>) matches the regular expression given in B<regexp-string>.
 
 B<xsh:same(node-set1, node-set2)> - returns B<true> if the given node sets both contain the same node (in XPath, this can also be expressed as B<count(node-set1E<verbar>node-set2)+count(node-set1)+count(node-set2)=1>).
 

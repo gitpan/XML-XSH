@@ -70,7 +70,9 @@ foreach { qw(command type) } {
   print "FILLING: ${__}"; print "";
   local %sec=d:/article/section[@id='${__}'];
   if ('$__'='type') $__='argtype';
-  foreach x:(//rule[@type='$__']) {
+  local %type=x:(//rule[@type='$__']);
+  sort (@name|documentation/title)[1] { $a cmp $b } %type;
+  foreach %type {
     local $ref=string(@id);
 
     cd x:id('$ref');

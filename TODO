@@ -1,5 +1,7 @@
 TODO:
 
+- MORE TESTS: open STRING, stream, and similar
+
 * get rid of the XSH subdirectory in the CVS tree
 * alias 'help commands' for 'help command'?
 * document the installation process for ActiveState perl

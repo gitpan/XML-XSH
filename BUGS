@@ -5,3 +5,7 @@ KNOWN BUGS
   may affect XSH when using xslt command, but in most
   cases, xslt works fine.
 
+- it is not possible to perform XPath searches on namespace
+  nodes (it's a limitation of libxml2)
+
+

@@ -4,9 +4,9 @@
 if ("$xsh_grammar_file" = "") $xsh_grammar_file="src/xsh_grammar.xml";
 if ("$db_stylesheet" = "") {
   # weired things happen in XML::LibXML/LibXSLT with new stylesheets!
-  $db_stylesheet="http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl";
+#  $db_stylesheet="http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl";
 
-#  perl { ($db_stylesheet)=split(/\n/,`locate html/docbook.xsl`); };
+  perl { ($db_stylesheet)=split(/\n/,`locate html/docbook.xsl`); };
   echo "Using DocBook XML stylesheet: $db_stylesheet"
 }
 if ("$db_stylesheet" = "") {
@@ -138,13 +138,13 @@ foreach X:/recdescent-xml/doc/section {
                  <title>Related $t</title>
                  <variablelist/>
                </simplesect>" into %section;
-  sort { $a=string(@name|@id) } { $b=string(@name|@id) } { $a cmp $b } %rules;
+  sort (@name|@id) { $a cmp $b } %rules;
   foreach %rules {
     add chunk "<varlistentry>
       <term><xref linkend='${{string(./@id)}}'/></term>
       <listitem></listitem>
     </varlistentry>" into %section/simplesect[last()]/variablelist;
-    copy ./documentation/shortdesc/node()
+    xcopy ./documentation/shortdesc/node()
       into %section/simplesect[last()]/variablelist/varlistentry[last()]/listitem;
   }
   call transform_section;
@@ -163,10 +163,7 @@ foreach { qw(command type) } {
   }
   if ('$__'='type') $__='argtype';
   %rules=X:(//rule[@type='$__']);
-  sort
-    { $a=string(./documentation/title|@name|@id) }
-    { $b=string(./documentation/title|@name|@id) }
-    { lc($a) cmp lc($b) } %rules;
+  sort (documentation/title|@name|@id) { lc($a) cmp lc($b) } %rules;
   foreach %rules {
     $ref=string(@id);
     new S "<section id='$ref'/>";
@@ -198,7 +195,7 @@ foreach { qw(command type) } {
     }
 
     #ALIASES
-    if (./aliases) {
+    if (./aliases/alias) {
       add chunk "<simplesect><title>Aliases</title><para><literal> </literal></para></simplesect>" into %section;
       foreach (./aliases/alias) {
 	copy ./@name append %section/simplesect[last()]/para/literal/text()[last()];
@@ -215,7 +212,7 @@ foreach { qw(command type) } {
     }
 
     #SEE ALSO
-    if (./documentation/see-also) {
+    if (./documentation/see-also/ruleref) {
       add chunk "<simplesect><title>See Also</title><para/></simplesect>" into %section;
       foreach (./documentation/see-also/ruleref) {
 	add element "<xref linkend='${{string(@ref)}}'/>" into %section/simplesect[last()]/para;

@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- cperl -*-
 
-# $Id: xsh,v 1.15 2002/11/07 09:43:00 pajas Exp $
+# $Id: xsh,v 1.29 2003/08/11 14:18:57 pajas Exp $
 
 use FindBin;
 use lib ("$FindBin::RealBin", "$FindBin::RealBin/../lib",
@@ -13,46 +13,89 @@ package main;
 
 use strict;
 
-use Getopt::Std;
-use vars qw/$opt_q $opt_w $opt_i $opt_h $opt_V $opt_E $opt_e $opt_d $opt_c $opt_s
-            $opt_f $opt_g $opt_v $opt_t $opt_T/;
+#use Getopt::Std;
+use Getopt::Long;
+use Pod::Usage;
+use vars qw/$opt_q $opt_w $opt_i $help $opt_V $opt_E $opt_e $opt_d $opt_c $opt_s
+            $opt_f $opt_g $opt_v $opt_t $opt_T $opt_a $opt_l $opt_n $opt_p $opt_P
+	    $usage $manpage $opt_HTML $opt_XML
+	    /;
 use vars qw/$VERSION $REVISION/;
 
 use IO::Handle;
 
 use XML::XSH qw(&xsh_set_output &xsh_get_output &xsh &xsh_init
-		&xsh_pwd &xsh_local_id &set_opt_q &set_opt_d
-		&set_opt_c);
-
-require Term::ReadLine if $opt_i;
+		&xsh_pwd &xsh_local_id &set_quiet &set_debug
+		&set_compile_only_mode);
 
 BEGIN {
-  getopts('tscqgvwdfhViTE:e:');
-  $VERSION='0.9';
-   $REVISION='$Revision: 1.15 $';
+  my $optparser=new Getopt::Long::Parser(config => ["bundling"]);
+  $optparser->getoptions(
+			 "arguments|a" => \$opt_a,
+			 "stdin|t" => \$opt_t,
+			 "compile|c" => \$opt_c,
+			 "quiet|q" => \$opt_q,
+			 "validation|v" => \$opt_v,
+			 "no-validation|w" => \$opt_w,
+			 "debug|d" => \$opt_d,
+			 "no-init|f" => \$opt_f,
+			 "help|h" => \$help,
+			 "version|V" => \$opt_V,
+			 "interactive|i" => \$opt_i,
+			 "non-interactive|n" => \$opt_n,
+			 "pipe|p" => \$opt_p,
+			 "html|H" => \$opt_HTML,
+			 "xml|X" => \$opt_XML,
+			 "trace-grammar|T" => \$opt_T,
+			 "query-encoding|E=s" => \$opt_E,
+			 "encoding|e=s" => \$opt_e,
+			 "load|l=s" => \$opt_l,
+			 "usage|u"        => \$usage,
+			 "man"        => \$manpage,
+			) or $usage=1;
+#  getopts('atscqvwdfhVinTE:e:l:pP');
+  $VERSION='0.12';
+   $REVISION='$Revision: 1.29 $';
   $ENV{PERL_READLINE_NOWARN}=1;
 }
 
-if ($opt_h) {
-  print "Usage: $0 [options] <commands>\n";
-  print "or $0 -h or $0 -V\n\n";
-  print "   -g   use XML::GDOME instead of XML::LibXML\n";
-  print "   -e   output encoding (default is the document encoding)\n";
-  print "   -E   query encoding (default is the output encoding)\n\n";
-  print "   -q   quiet\n\n";
-  print "   -i   interactive\n\n";
-  print "   -t   read commands from stdin\n",
-        "        (default is on unless there are commands on the command-line)\n\n";
-  print "   -f   ignore ~/.xshrc\n\n";
-  print "   -d   print debug messages\n\n";
-  print "   -c   compile (parse) only and report errors\n\n";
-  print "   -v   start with validation 1 and load_ext_dtd 1\n\n";
-  print "   -w   start with validation 0 and load_ext_dtd 0\n\n";
-  print "   -V   print version\n\n";
-  print "   -T   trace grammar\n\n";
-  print "   -h   help\n\n";
-  exit 1;
+# Help and usage
+if ($usage) {
+  pod2usage(-msg => 'xsh - XML Editing Shell');
+#  exit 0;
 }
+if ($help) {
+  pod2usage(-exitstatus => 0, -verbose => 1);
+}
+if ($manpage) {
+  pod2usage(-exitstatus => 0, -verbose => 2);
+}
+
+my $string;
+if ($opt_a) {
+  @XML::XSH::ARGV=@ARGV;
+} else {
+  $string=join " ",@ARGV;
+}
+
+die "Incompatible options: --html, --xml\n" if $opt_XML+$opt_HTML > 1;
+if ($opt_HTML) {
+  $XML::XSH::Functions::DEFAULT_FORMAT='html';
+} elsif ($opt_XML) {
+  $XML::XSH::Functions::DEFAULT_FORMAT='xml';
+}
+
+if ($opt_p) {
+  $opt_n=1;
+  $opt_i=0;
+  $opt_t=0;
+}
+
+unless ($opt_n || $opt_i) {
+  $opt_i=((-t STDIN) && !$opt_l && !$string) ? 1 : 0;
+}
+
+require Term::ReadLine if $opt_i;
 
 if ($opt_V) {
   my $rev=$REVISION;
@@ -70,32 +113,33 @@ $::RD_HINT   = 1; # Give out hints to help fix problems.
 $::RD_TRACE   = $opt_T; # Give out hints to help fix problems.
 
 my $module;
-if ($opt_g) {
-  $module="XML::XSH::GDOMECompat";
-} else {
-  $module="XML::XSH::LibXMLCompat"
-}
+#if ($opt_g) {
+#  $module="XML::XSH::GDOMECompat";
+#} else {
+  $module="XML::XSH::LibXMLCompat";
+#}
 xsh_init($module);
 
-set_opt_q($opt_q);
-set_opt_d($opt_d);
-set_opt_c($opt_c);
+set_quiet($opt_q);
+set_debug($opt_d);
+set_compile_only_mode($opt_c);
 
-$XML::XSH::Functions::SIGSEGV_SAFE=$opt_s;
-
-my $doc=XML::XSH::Functions::create_doc("scratch","scratch");
+my $doc=XML::XSH::Functions::create_doc("scratch","scratch",'xml');
 #XML::XSH::Functions::set_last_id("scratch");
 XML::XSH::Functions::set_local_xpath(['scratch','/']);
 
 if ($opt_w) {
   XML::XSH::Functions::set_validation(0);
   XML::XSH::Functions::set_load_ext_dtd(0);
+  XML::XSH::Functions::set_expand_entities(0);
+  XML::XSH::Functions::set_complete_attributes(0);
 } elsif ($opt_v) {
   XML::XSH::Functions::set_validation(1);
   XML::XSH::Functions::set_load_ext_dtd(1);
+  XML::XSH::Functions::set_expand_entities(1);
+  XML::XSH::Functions::set_complete_attributes(1);
 }
 
-my $string=join " ",@ARGV;
 my $l;
 
 eval {
@@ -129,27 +173,41 @@ if ($opt_i) {
   $XML::XSH::Functions::_die_on_err=1;
 }
 
+xsh("open _=-") if ($opt_p);
+
 if ($string) {
   print "xsh> $string\n" if ($opt_i and not $opt_q);
   xsh($string);
   print "\n" if ($opt_i and not $opt_q);
 }
 
+if ($opt_l) {
+  my $load;
+  open($load,"$opt_l") || do { print STDERR "Error loading $opt_l: $!\n"; exit 1 };
+  xsh(join "",<$load>);
+  close $load;
+}
+
+my $term;
+sub _term { $term };
+
 if ($opt_i) {
-  my $term;
   $term = new Term::ReadLine('xsh');
   $XML::XSH::Functions::_on_exit=
     [sub { 
        my ($exit_code,$term)=@_;
-       eval {
-	 print STDERR "saving $ENV{HOME}/.xsh_history\n";
-	 open HIST,"> $ENV{HOME}/.xsh_history" || die "cannot open $ENV{HOME}/.xsh_history";
-	 print HIST join("\n",$term->GetHistory()),"\n";
-	 close HIST;
-       };
-       if ($@) {
-	 print STDERR "Error occured while writing to ~/.xsh_history\n";
-	 print STDERR "$@\n";
+       if ($term->can('GetHistory')) {
+	 eval {
+	   print STDERR "saving $ENV{HOME}/.xsh_history\n";
+	   open HIST,"> $ENV{HOME}/.xsh_history" || die "cannot open $ENV{HOME}/.xsh_history";
+	   print HIST join("\n",$term->GetHistory());
+	   close HIST;
+	   print STDERR "done\n";
+	 };
+	 if ($@) {
+	   print STDERR "Error occured while writing to ~/.xsh_history\n";
+	   print STDERR "$@\n";
+	 }
        }
      },$term
     ];
@@ -162,15 +220,18 @@ if ($opt_i) {
     }
   };
   if ($@) {
-    print STDERR "Error occured while writing to ~/.xsh_history\n";
+    print STDERR "Error occured while reading from ~/.xsh_history\n";
     print STDERR "$@\n";
   }
 
 #  XML::XSH::Completion::cpl();
   if ($term->ReadLine eq "Term::ReadLine::Gnu") {
-    $term->Attribs->{attempted_completion_function} = \&XML::XSH::Completion::gnu_cpl;
+    $term->Attribs->{attempted_completion_function} = \&XML::XSH::Completion::gnu_complete;
+    $term->Attribs->{completion_entry_function} = sub { return () };
+    $term->Attribs->{completer_word_break_characters} = " =\t\n\r\"'`;|&})[{(]";
   } else {
-    $readline::rl_completion_function = 'XML::XSH::Completion::cpl';
+    $readline::rl_completion_function = 'XML::XSH::Completion::perl_complete';
+    $readline::rl_completer_word_break_characters = " =\t\n\r\"'`;|&})[{(]";
   }
 
   xsh_set_output($term->OUT) if ($term->OUT);
@@ -193,12 +254,12 @@ if ($opt_i) {
 #      $term->addhistory($l);
     }
   }
-
-} elsif ($string eq "" or $opt_t) {
+  print STDERR "Good bye!\n" if $opt_i and not "$opt_q";
+} elsif ((!$opt_p and $string eq "" and $opt_l eq "") or $opt_t) {
   xsh(join "",<STDIN>);
 }
 
-print STDERR "Good bye!\n" if $opt_i and not "$opt_q";
+xsh("save _ -") if ($opt_p);
 
 # get a line of input from ReadLine
 # if ^C interruption by user occures return $retonint
@@ -224,3 +285,152 @@ sub get_line {
 sub prompt {
   return 'xsh '.xsh_local_id().":".xsh_pwd().'> ';
 }
+
+__END__
+
+
+=head1 xsh
+
+xsh - XML Editing Shell
+
+=head1 SYNOPSIS
+
+  xsh [options] commands
+  xsh [options] -al script [arguments ...]
+  xsh [options] -p commands < input.xml > output.xml
+
+  xsh -u          for usage
+  xsh -h          for help
+  xsh --man       for the manual page
+
+=head1 DESCRIPTION
+
+XSH is an shell-like language for XPath-oriented editing, querying and
+manipulation of XML and HTML files (with read-only support for DocBook
+SGML). C<xsh> can work as an interactive shell (with full command-line
+support such as history, TAB-completion, etc.) or as an off-line
+interpreter for batch processing of XML files.
+
+=head1 XSH COMMANDS
+
+Please see L<http://xsh.sourceforge.net/doc/frames/index.html> or
+L<XSH> for a complete XSH language reference.
+
+For a quick help, type C<xsh help> (just C<help> on xsh prompt).
+
+Type C<xsh help commands> to get list of available XSH commands and
+C<xsh help B<command>> with B<command> replaced by a XSH command name
+to get help on a particular command.
+
+=head1 COMMAND-LINE OPTIONS
+
+=over 8
+
+=item B<--load|-l> script-file
+
+Load and execute given XSH script (the script is executed before all
+other commands provided on the command-line, but after executed
+~/.xshrc).
+
+=item B<--arguments|-a>
+
+Command-line contains arguments accessible to the script via
+C<@XSH::Map::ARGV> rather than XSH commands.
+
+=item B<--stdin|-t>
+
+Don't display command-prompt even if run from a terminal, expecting
+XSH commands in the standard input.
+
+=item B<--compile|-c>
+
+Compile the XSH source and report errors, only. No commands are
+actually executed.
+
+=item B<--quiet|-q>
+
+Quiet mode: suppress all unnecessary informatory ouptut.
+
+=item B<--validation|-v>
+
+Start with validation, load_ext_dtd, parser_expands_entities
+and parser_completes_attributes 1 (on).
+
+=item B<--no-validation|-w>
+
+Start with validation, load_ext_dtd, parser_expands_entities
+and parser_completes_attributes 0 (off).
+
+=item B<--debug|-d>
+
+Print some debug messages.
+
+=item B<--no-init|-f>
+
+Ignore ~/.xshrc
+
+=item B<--version|-V>
+
+Print XSH version info and exit.
+
+=item B<--interactive|-i>
+
+Start interactive mode with xsh command prompt. By default, the
+interactive mode is only started if C<xsh> is running from a terminal
+and neither XSH commands nor a script are given on the command-line.
+
+=item B<--non-interactive|-n>
+
+Force non-interactive mode.
+
+=item B<--pipe|-p>
+
+This is a special mode in which xsh acts as a pipe-line processing
+tool.  In this mode, first the standard input is read and opened as a
+document _ (underscore), then all XSH commands given in ~/.xshrc,
+command-line and given XSH scripts are applied and finally the
+(possibly modified) document _ is dumped back on the standard output.
+
+=item B<--html|-H>
+
+Make XSH expect HTML documents by default in all open/save operations.
+
+=item B<--xml|-X>
+
+This option is included only for completeness sake.
+Make XSH expect XSH documents by default in all open/save operations
+(this is the default).
+
+=item B<--trace-grammar|-T>
+
+This option allows tracing the way XSH language parser processes your
+script.
+
+=item B<--query-encoding|-E> encoding
+
+Set the encoding that used in the XSH scripts (or keyboard input).
+
+=item B<--encoding|-e> encoding
+
+Set the encoding that should be used for XSH output.
+
+=item B<--usage|-u>
+
+Print a brief help message on usage and exits.
+
+=item B<--help|-h>
+
+Prints the help page and exits.
+
+=item B<--man>
+
+Displays the help as manual page.
+
+=back
+
+=head1 AUTHOR
+
+Petr Pajas <pajas@matfyz.cz>
+
+Copyright 2000-2003 Petr Pajas, All rights reserved.
+

@@ -1,3 +1,386 @@
+2003-08-11  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm, lib/XML/XSH/Parser.pm:
+	regenerated
+
+	* tools/gen_pod.pl: initial commit
+
+	* t/01basic.t, t/02gdome.t, t/03copy.t, t/04flow.t, t/05misc.t:
+	removed SIGSEGV_SAFE
+
+	* Makefile.PL:
+	removed building .tar.gz package for ppd distribution (has to be done
+	on windows anyway for some reason)
+
+	* tools/chunk.xsl: use.id.as.filename=1
+
+	* lib/XML/XSH/Functions.pm: workarounds for RH's buggy perl5.8
+
+	* xsh: -l also disables implicit interactive mode
+
+	* Makefile.PL: added winppd target
+
+2003-08-08  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm: regenerated
+
+	* src/xsh_grammar.xml: - docu fixes
+
+	* lib/XML/XSH.pm, xsh, lib/XML/XSH/Functions.pm:
+	version nuber increased
+
+2003-08-08  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm: regenerated
+
+	* src/xsh_grammar.xml: - docu fixes
+
+	* lib/XML/XSH.pm, xsh, lib/XML/XSH/Functions.pm:
+	version nuber increased
+
+2003-08-07  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/CompletionList.pm, lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm:
+	- regenerated
+
+	* lib/XML/XSH/Completion.pm, tools/gen_completions.pl:
+	- completion fixes
+
+	* tools/gen_doc.xsh: - make the resulting document valid
+
+	* tools/gen_reference.xsh: - bugfixes (see-also, shortdesc)
+
+	* tools/gen_help.pl: - see also fixed
+
+	* tools/gen_completions.pl: - fixes
+	- added list of commands that should not complete with xpath
+
+	* lib/XML/XSH/CompletionList.pm, lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm, lib/XML/XSH/Parser.pm:
+	regenerated
+
+	* lib/XML/XSH/LibXMLCompat.pm:
+	- XML_HTML_DOCUMENT also considered a document node
+	- added document_type
+
+	* src/xsh_grammar.xml: - doc_info
+	- minor changes in docu
+
+	* lib/XML/XSH/Functions.pm: - introduced $DEFAULT_FORMAT
+	- doc_info
+
+	* lib/XML/XSH/Completion.pm:
+	- improved filename, command and document-ID completiosn
+	- unified completion code for RL::Perl and RL::Gnu
+	- disabled XPath completion after commands expecting no argument or expressions
+
+	* lib/XML/XSH.pm: - POD changes
+
+	* xsh: - long options
+	- POD/man
+
+	* Makefile.PL: more POD
+
+	* MANIFEST, MANIFEST.SKIP: *** empty log message ***
+
+	* lib/XML/XSH/Completion.pm: - scalar variable completion fixed
+	- filename completion fixed for RL::Gnu
+
+2003-08-06  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* src/xsh_grammar.xml: - unregister_func/_ns
+	- documentation
+
+	* lib/XML/XSH/Functions.pm: - unregister_func/_ns
+
+	* xsh: - try saving history only if supported by the backend
+	- minor fixes
+
+	* TODO, Makefile.PL: more strict requirements
+
+2003-08-05  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/CompletionList.pm, lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm, lib/XML/XSH/Parser.pm:
+	regenerated
+
+	* src/xsh_grammar.xml:
+	- added regns* and regfunc aliases to register-*namespace and
+	  register-function
+
+	* lib/XML/XSH/Functions.pm: - undef(ine) command implementation
+
+	* lib/XML/XSH/CompletionList.pm, lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm, lib/XML/XSH/Parser.pm:
+	regenerated
+
+	* src/xsh_grammar.xml: added undef(ine) command
+
+	* lib/XML/XSH/Completion.pm: - some RL::Perl completion tweaking
+
+	* xsh: - some completion related fixes (added = among word-boundary
+	  characters)
+	- added -p/-P as a convenient shortcuts for pipeline processing
+
+2003-06-05  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/Completion.pm:
+	- added nodetype completion for insert/xinsert
+	- enabled axis completion in xpath after [,(,+,-,<,>,= (not after * though)
+
+	* lib/XML/XSH/Completion.pm: fix double axis completion
+
+	* src/xsh_grammar.xml: *** empty log message ***
+
+	* xsh: changed completion word breaking characters
+
+2003-06-04  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/Completion.pm:
+	some more XPath completion cleanup and fixes
+
+	* lib/XML/XSH/Functions.pm: added _doc() function
+
+	* tools/gen_reference.xsh: missing bracket fixed
+
+	* lib/XML/XSH/Completion.pm, lib/XML/XSH/CompletionList.pm, lib/XML/XSH/Functions.pm, lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm, lib/XML/XSH/Parser.pm, src/xsh_grammar.xml:
+	- fixes in xpath axis completion
+	- added xpath_completion and xpath_axis_completions runtime options
+
+	* xsh: cleaner implementation of tty detection (-t of course)
+
+	* xsh:
+	try to autodetect a tty on POSIX systems (requires tty system command)
+
+2003-05-30  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/Completion.pm, lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm, lib/XML/XSH/Parser.pm:
+	update
+
+	* lib/XML/XSH/Functions.pm:
+	moved xpath extension functions to xsh namespace
+
+	* src/xsh_grammar.xml: - added register_xsh_namespace
+	- documentation for xpath extension functions
+
+	* lib/XML/XSH/CompletionList.pm:
+	fixes in XPath completion an namespaces
+
+	* xsh: fixed Term::ReadLine::Gnu completion
+
+2003-05-26  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/Completion.pm:
+	- xpath completion code moved to Completion.pm
+	- added axes completion
+
+	* lib/XML/XSH/Functions.pm:
+	xpath completion code moved to Completion.pm
+
+2003-05-07  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/Functions.pm, xsh, tools/xpcomp.pl: minor fixes
+
+2003-05-06  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/Completion.pm:
+	added support for XPath completion under Term::ReadLine::Gnu
+
+	* tools/xpcomp.pl: initial commit
+
+	* lib/XML/XSH/Completion.pm, lib/XML/XSH/Functions.pm:
+	first attempt for XPath completion
+
+	* tools/gen_quickref.pl: initial commit
+
+	* src/xsh_grammar.xml: fixed usage for insert and xinsert
+
+2003-05-02  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm, lib/XML/XSH/Parser.pm:
+	*** empty log message ***
+
+	* lib/XML/XSH/Functions.pm: - allow no argument for namespaces command
+
+	* src/xsh_grammar.xml: - added docu for namespaces command
+	- made the argument optional
+
+	* t/04flow.t, t/05misc.t: *** empty log message ***
+
+	* TODO, lib/XML/XSH/CompletionList.pm, lib/XML/XSH/Functions.pm, lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm, lib/XML/XSH/Parser.pm, src/xsh_grammar.xml:
+	- added namespaces command
+	- renamed files to documents (files and docs are aliases)
+	- made section ID's capitalized (prevents naming clashes)
+	- workarounded stupid RH8+'s perl regexp bug
+
+2003-04-16  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/Functions.pm:
+	use DummyXPathContext if XPathContext cannot be loaded
+
+	* lib/XML/XSH/LibXMLCompat.pm:
+	add value() method to XML::LibXML::NodeList
+
+	* lib/XML/XSH/DummyXPathContext.pm: initial commit
+
+	* MANIFEST, MANIFEST.SKIP: update
+
+	* lib/XML/XSH/Functions.pm: removed __debug print
+
+2003-04-15  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/Functions.pm: fixed eval_xpath_literal
+
+2003-04-14  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm, lib/XML/XSH/Parser.pm, src/xsh_grammar.xml:
+	*** empty log message ***
+
+	* lib/XML/XSH/CompletionList.pm, lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm, lib/XML/XSH/Parser.pm, src/xsh_grammar.xml:
+	- namespace registration
+	- perl extension function registration
+	- SAX-based stream processing
+
+	* t/02gdome.t: disabled GDOME support
+
+	* Makefile.PL: fix
+
+	* lib/XML/XSH/Functions.pm, lib/XML/XSH/LibXMLCompat.pm:
+	- use XML::LibXML::XPathContext
+	- stream processing
+
+	* xsh: disabled GDOME support
+
+	* Makefile.PL: require XML::LibXML::XPathContext
+
+2003-03-28  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/Functions.pm: - encoding fixups
+	- better NS handling for copied nodes
+
+2003-03-19  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm: update
+
+2003-03-12  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* src/xsh_grammar.xml: fix some english grammar in the docu
+
+	* Makefile.PL: require iterator
+
+	* src/xsh_grammar.xml: - rename, prev, iterate added
+	- sort changed
+
+	* tools/gen_doc.xsh, tools/gen_reference.xsh: update
+
+	* t/01basic.t, t/02gdome.t, t/03copy.t, t/04flow.t: actualization
+
+	* lib/XML/XSH/Help.pm: - regenereated
+
+	* lib/XML/XSH/LibXMLCompat.pm: - iterators
+	- some rename
+
+	* lib/XML/XSH/Iterators.pm: initial commit
+
+	* lib/XML/XSH/Functions.pm: - New sort approach implemented
+	- rename support added
+	- carefull insertBefore
+	- iterate and prev support
+	- XML::XSH::Map::type perl function added
+
+	* lib/XML/XSH/Completion.pm: improved completion
+
+	* lib/XML/XSH/CompletionList.pm, lib/XML/XSH/Grammar.pm, lib/XML/XSH/Parser.pm:
+	re-generated
+
+	* lib/XML/XSH.pm: =head fix
+
+	* xsh: added -w, slightly changed -v behavior
+
+	* BUGS: update
+
+2003-01-22  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/CompletionList.pm, lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm, lib/XML/XSH/Parser.pm:
+	regenerated
+
+	* lib/XML/XSH/GDOMECompat.pm: - load_catalog un-implementation (;-/)
+	- updates
+
+	* lib/XML/XSH/LibXMLCompat.pm: - load_catalog implementation
+	- updates
+
+	* src/xsh_grammar.xml: - try {...} catch [[local] $var] {...}
+	- throw
+	- last, next, redo, return
+	- load_catalog
+
+	* lib/XML/XSH/Functions.pm: - switched to variable oriented flags
+	- variable name parsing fix (avoid - in variable name)
+	- try {...} catch [$var] {...}/throw implementations
+	- last, next, redo, return implementaton
+	- load_catalog imple
+
+	* lib/XML/XSH/Completion.pm:
+	implemented variable, subroutine and help completions
+
+	* xsh: use new XML::XSH::Functions::set_* names
+
+2002-12-13  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/Functions.pm: version no increased
+
+	* lib/XML/XSH.pm: added small example of XSH language to SYNOPSIS
+
+	* lib/XML/XSH/Functions.pm: - try/catch minor fixes
+
+2002-12-11  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* tools/gen_help.pl:
+	- related commands help added to individual sections
+
+	* lib/XML/XSH/Help.pm: - strip-whitespace command added
+	- related commands help added to individual sections
+
+	* lib/XML/XSH/CompletionList.pm, lib/XML/XSH/Functions.pm, lib/XML/XSH/Grammar.pm, lib/XML/XSH/Parser.pm, src/xsh_grammar.xml:
+	strip-whitespace command added
+
+2002-12-09  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* MANIFEST: xslt stylesheets added
+
+	* Makefile.PL:
+	stronger requirements: XML::LibXML-1.54, XML::XUpdate::LibXML-0.3.0
+
+	* tools/gen_reference.xsh:
+	use the locate stuff rather than http:// since docbook xsl 1.57 seems
+	to break XML::LibXSLT
+
+	* xsh: -a and -l options added
+
+	* lib/XML/XSH/CompletionList.pm, lib/XML/XSH/Functions.pm, lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm, lib/XML/XSH/Parser.pm, src/xsh_grammar.xml:
+	try/catch implemented
+	normalize command added
+
+2002-11-07  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/Functions.pm, xsh: better version information reporting
+
+	* tools/fo.xsl: palatino -> Palatino
+
+	* tools/fop.xsl: initial commit
+
+2002-11-06  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* ChangeLog: update
+
+	* BUGS: alright, there is one
+
+	* tools/gen_doc.xsh, tools/gen_reference.xsh: base dir
+
+	* tools/chunk.xsl: basedir added
+
+	* src/xsh_grammar.xml: docu fixes
+
+	* lib/XML/XSH/Functions.pm: xslt loading stylesheet from URL fixed
+
 2002-11-06  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
 
 	* BUGS: alright, there is one

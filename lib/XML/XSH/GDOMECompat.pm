@@ -1,4 +1,4 @@
-# $Id: GDOMECompat.pm,v 1.7 2002/10/25 16:01:39 pajas Exp $
+# $Id: GDOMECompat.pm,v 1.8 2003/01/22 15:06:12 pajas Exp $
 
 package XML::XSH::GDOMECompat;
 
@@ -95,8 +95,13 @@ sub parser_options {
   my $mode=GDOME_LOAD_PARSING;
   $mode |= GDOME_LOAD_VALIDATING if $XML::XSH::Functions::VALIDATION;
   $mode |= GDOME_LOAD_RECOVERING if $XML::XSH::Functions::RECOVERING;
-  $mode |= GDOME_LOAD_SUBSTITUTE_ENTITIES if $XML::XSH::Functions::EXPAND_ENTITIES;
-  $mode |= GDOME_LOAD_COMPLETE_ATTRS if $XML::XSH::Functions::COMPLETE_ATTRIBUTES;
+  $mode |= GDOME_LOAD_SUBSTITUTE_ENTITIES if $XML::XSH::Functions::PARSER_EXPANDS_ENTITIES;
+  $mode |= GDOME_LOAD_COMPLETE_ATTRS if $XML::XSH::Functions::PARSER_COMPLETES_ATTRIBUTES;
+}
+
+sub load_catalog {
+  croak "catalogs not supported by GDOME\n";
+  return undef;
 }
 
 sub parse_html_file {
@@ -122,7 +127,7 @@ sub parse_sgml_fh {
 sub parse_string {
   my ($class,$parser,$str)=@_;
   my $doc =$parser->createDocFromString($str,parser_options());
-  if ( $XML::XSH::Functions::EXPAND_XINCLUDE ) {
+  if ( $XML::XSH::Functions::PARSER_EXPANDS_XINCLUDE ) {
     $doc->process_xinclude();
   }
   return $doc;
@@ -133,7 +138,7 @@ sub parse_fh {
   local $/ = undef;
   my $str = <$fh>;
   my $doc = $parser->createDocFromString($str,parser_options());
-  if ( $XML::XSH::Functions::EXPAND_XINCLUDE ) {
+  if ( $XML::XSH::Functions::PARSER_EXPANDS_XINCLUDE ) {
     $doc->process_xinclude();
   }
   return $doc;
@@ -142,7 +147,7 @@ sub parse_fh {
 sub parse_file {
   my ($class,$parser, $uri) = @_;
   my $doc = $parser->createDocFromURI($uri,parser_options());
-  if ( $XML::XSH::Functions::EXPAND_XINCLUDE ) {
+  if ( $XML::XSH::Functions::PARSER_EXPANDS_XINCLUDE ) {
     $doc->process_xinclude();
   }
   return $doc;

@@ -13,8 +13,8 @@ open x = $xsh_grammar_file;
 load-ext-dtd 0;
 validation 0;
 
-create d 
-'<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+create d <<EOF;
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
 <article>
   <title>XSH Reference</title>
@@ -27,7 +27,8 @@ create d
   <section id="type">
     <title>Type Reference</title>
   </section>
-</article>';
+</article>
+EOF
 
 xcopy x:/recdescent-xml/doc/description/node() into d:/article/section[@id='intro'];
 xcopy x:/recdescent-xml/doc/section into d:/article/section[@id='intro'];
@@ -43,19 +44,25 @@ foreach d:/article/section[@id='intro']/section {
   if ('$c' != '' and '$a' != '') { $t='$a and $c' } else { $t='$a$c' }
 
   if ('$a$c' != '')
-    add chunk "<simplesect>
-                 <title>Related $t</title>
-                 <variablelist/>
-               </simplesect>" append .;
-  local %varlist=./simplesect[last()]/variablelist;
+    add chunk <<"EOF" append .;
+<section>
+  <title>Related $t</title>
+  <para>
+    <variablelist/>
+  </para>
+ </section>
+EOF
+  local %varlist=./section[last()]/para/variablelist;
   local $a $b;
-  sort { $a=string(@name|@id) } { $b=string(@name|@id) } { $a cmp $b } %rules;
+  sort (@name|@id) { $a cmp $b } %rules;
   foreach %rules {
-    add chunk "<varlistentry>
+    add chunk <<"EOF" into %varlist;
+    <varlistentry>
       <term><xref linkend='${{string(./@id)}}'/></term>
-      <listitem></listitem>
-    </varlistentry>" into %varlist;
-    copy ./documentation/shortdesc/node() into %varlist/varlistentry[last()]/listitem;
+      <listitem><para/></listitem>
+    </varlistentry>
+EOF
+    xcopy ./documentation/shortdesc/node() into %varlist/varlistentry[last()]/listitem/para;
   }
 }
 
@@ -91,12 +98,13 @@ foreach { qw(command type) } {
     }
 
     #ALIASES
-    if (./aliases) {
-      add chunk
-	"<simplesect>
-           <title>Aliases</title>
-            <para><literal> </literal></para>
-         </simplesect>" into %section;
+    if (./aliases/alias) {
+      add chunk <<CHUNK into %section;
+ <simplesect>
+   <title>Aliases</title>
+   <para><literal> </literal></para>
+ </simplesect>
+CHUNK
       foreach (./aliases/alias) {
 	copy ./@name 
 	  append %section/simplesect[last()]/para/literal/text()[last()];
@@ -116,7 +124,7 @@ foreach { qw(command type) } {
     }
 
     #SEE ALSO
-    if (./documentation/see-also) {
+    if (./documentation/see-also/ruleref) {
       add chunk "<simplesect><title>See Also</title><para/></simplesect>" into %section;
       foreach (./documentation/see-also/ruleref) {
 	add element "<xref linkend='${{string(@ref)}}'/>"
@@ -154,4 +162,8 @@ foreach d://variablelist {
 }
 
 indent 1;
+rename {$_='informalexample'} //example[not(title)]; # for validity sake
+for { 1..5 } {
+  rename {$_='sect'.$__} //section[not(ancestor::section)]; # for validity sake
+}
 saveas d 'doc/xsh_reference.xml';

@@ -1,4 +1,4 @@
-# $Id: XSH.pm,v 1.7 2002/09/27 09:53:50 pajas Exp $
+# $Id: XSH.pm,v 1.11 2003/08/08 14:02:47 pajas Exp $
 
 package XML::XSH;
 
@@ -10,7 +10,7 @@ use XML::XSH::Functions qw(:default);
 use XML::XSH::Completion;
 
 BEGIN {
-  $VERSION   = '1.1';
+  $VERSION   = '1.2';
   @ISA       = qw(Exporter);
   @EXPORT = qw(&xsh);
   @EXPORT_OK = @XML::XSH::Functions::EXPORT_OK;
@@ -21,14 +21,27 @@ BEGIN {
 
 =head1 NAME
 
-XML::XSH - Powerfull Scripting Language/Shell for XPath-based Editing of XML
+XML::XSH - A powerfull scripting language/shell for XPath-based editing of XML
 
 =head1 SYNOPSIS
 
  use XML::XSH;
  xsh(<<'__XSH__');
 
- ... XSH Language commands ...
+   # ... XSH Language commands (example borrowed from Kip Hampton's article) ...
+   open sources="perl_channels.xml";   # open a document from file
+   create merge news-items;            # create a new document
+
+   foreach sources://rss-url {         # traverse the sources document
+       open src=${{ string(@href) }};  # load the URL given by @href attribute
+       map { $_ = lc($_) } //*;        # lowercase all tag names
+       xcopy src://item                # copy all items from the src document
+          into merge:/news-items[1];   # into the news-items element in merge document
+       close src;                      # close src document (not mandatory)
+   };
+   close sources;
+   saveas merge "files/headlines.xml"; # save the resulting merge document
+   close merge;
 
  __XSH__
 
@@ -43,11 +56,12 @@ xsh()
 =head1 DESCRIPTION
 
 This module implements XSH sripting language. XSH stands for XML
-(editing) SHell. XSH language is documented on
-http://xsh.sourceforge.net/doc.
+(editing) SHell. XSH language is documented in L<XSH>
+and on L<http://xsh.sourceforge.net/doc>.
 
 The distribution package of XML::XSH module includes XSH shell
-interpreter called C<xsh>. To use interactively, run C<xsh -i>.
+interpreter called C<xsh> (see L<xsh>). To use it interactively, run
+C<xsh -i>.
 
 =head2 C<xsh_init>
 
@@ -67,6 +81,6 @@ Petr Pajas, pajas@matfyz.cz
 
 =head1 SEE ALSO
 
-L<XML::LibXML>, L<XML::XUpdate>, http://xsh.sourceforge.net/doc
+L<xsh> L<XSH> L<XML::LibXML>, L<XML::XUpdate>
 
 =cut

@@ -43,8 +43,7 @@ EOF
   plan tests => 4+@xsh_test;
 }
 END { ok(0) unless $loaded; }
-use XML::XSH qw/&xsh &xsh_init &set_opt_q &xsh_set_output/;
-$XML::XSH::Functions::SIGSEGV_SAFE=1;
+use XML::XSH qw/&xsh &xsh_init &set_quiet &xsh_set_output/;
 $loaded=1;
 ok(1);
 
@@ -55,7 +54,7 @@ $::RD_WARN   = 1; # Enable warnings. This will warn on unused rules &c.
 $::RD_HINT   = 1; # Give out hints to help fix problems.
 
 xsh_set_output(\*STDERR);
-set_opt_q(0);
+set_quiet(0);
 xsh_init();
 
 print STDERR "\n";

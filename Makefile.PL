@@ -1,4 +1,4 @@
-# $Id: Makefile.PL,v 1.9 2002/09/02 15:37:54 pajas Exp $
+# $Id: Makefile.PL,v 1.17 2003/08/11 15:07:45 pajas Exp $
 
 use strict;
 
@@ -12,11 +12,14 @@ WriteMakefile(
     'EXE_FILES' => ['xsh'],
     'PREREQ_PM' => {
 		    'XML::LibXML' => 1.54,
+		    'XML::LibXML::Iterator' => 0,
 		    'Parse::RecDescent' => 1.79,
-		    'XML::XUpdate::LibXML' => 0.3.0,
+		    'XML::XUpdate::LibXML' => "0.4.0",
+		    'XML::LibXML::XPathContext' => 0.04,
 		   },
      AUTHOR       => 'Petr Pajas (pajas@matfyz.cz)',
      ABSTRACT     => 'XML Editing Shell',
+     MAN3PODS     => { 'XSH.pod' => 'blib/man3/XSH.3' },
     'dist' => {
          COMPRESS  => 'gzip',
          SUFFIX    => 'gz',
@@ -26,16 +29,24 @@ WriteMakefile(
 );
 
 sub MY::postamble {
-'
+
+return <<'EOF';
 xml:
 	tools/gen_grammar.pl src/xsh_grammar.xml > lib/XML/XSH/Grammar.pm
 	tools/gen_help.pl src/xsh_grammar.xml > lib/XML/XSH/Help.pm
+	tools/gen_pod.pl src/xsh_grammar.xml > XSH.pod
 	tools/gen_completions.pl src/xsh_grammar.xml > lib/XML/XSH/CompletionList.pm
 	cd lib/XML/XSH; perl -MGrammar -e XML::XSH::Grammar::compile
 
-docs:
+docs: all
+	pod2html --noindex --title "xsh - XML Editing Shell" < xsh > doc/xsh.html
 	./xsh < tools/gen_reference.xsh
 	./xsh < tools/gen_doc.xsh
-'
+
+winppd: ppd
+	perl -i~ -pe 's/OS NAME=".*"/OS NAME="MSWin32"/; s/ARCHITECTURE NAME=".*"/ARCHITECTURE NAME="MSWin32-x86-multi-thread"/; s/CODEBASE HREF=".*"/CODEBASE HREF="XML-XSH.tar.gz"/;' XML-XSH.ppd
+
+EOF
+
 }
 

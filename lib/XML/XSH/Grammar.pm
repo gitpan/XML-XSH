@@ -1,5 +1,5 @@
 # This file was automatically generated from src/xsh_grammar.xml on 
-# Wed Mar 20 18:50:24 2002
+# Thu Mar 21 15:30:19 2002
 
 
 package XML::XSH::Grammar;
@@ -25,6 +25,7 @@ $grammar=<<'_EO_GRAMMAR_';
 	  | close_command
 	  | open_command
 	  | openhtml_command
+	  | openpipe_command
 	  | validate_command
 	  | valid_command
 	  | list_dtd_command
@@ -548,7 +549,12 @@ $grammar=<<'_EO_GRAMMAR_';
 
   openhtml_command:
 	    /(open_HTML)\s/ id_or_var /\s*=\s*/ filename
-		{ [\&XML::XSH::Functions::open_doc,@item[2,4],1] }
+		{ [\&XML::XSH::Functions::open_doc,@item[2,4],'html'] }
+  	
+
+  openpipe_command:
+	    /(open_PIPE)\s/ id_or_var /\s*=\s*/ expression
+		{ [\&XML::XSH::Functions::open_doc,@item[2,4],'pipe'] }
   	
 
   create_command:

@@ -1,5 +1,5 @@
 # This file was automatically generated from src/xsh_grammar.xml on 
-# Wed Mar 20 18:50:24 2002
+# Thu Mar 21 15:30:19 2002
 
 package XML::XSH::Help;
 use strict;
@@ -49,12 +49,13 @@ description: assign, call, cd, clone, close, complete_attributes, copy, count, c
 	     debug, def, defs, dtd, encoding, eval, exec, exit, files,
 	     foreach, help, if, include, indent, insert, keep_blanks, lcd,
 	     list, load_ext_dtd, locate, map, move, nodebug, open,
-	     open_HTML, parser_expands_entities, parser_expands_xinclude,
-	     pedantic_parser, print, print_enc_command, process_xinclude,
-	     pwd, query-encoding, quiet, remove, run-mode, save, save_HTML,
-	     saveas, select, test-mode, unless, valid, validate,
-	     validation, variables, verbose, version, while, xcopy,
-	     xinsert, xmove_command, xslt, xupdate
+	     open_HTML, open_PIPE, parser_expands_entities,
+	     parser_expands_xinclude, pedantic_parser, print,
+	     print_enc_command, process_xinclude, pwd, query-encoding,
+	     quiet, remove, run-mode, save, save_HTML, saveas, select,
+	     test-mode, unless, valid, validate, validation, variables,
+	     verbose, version, while, xcopy, xinsert, xmove_command, xslt,
+	     xupdate
 
 END
 
@@ -748,6 +749,16 @@ description: Open a new HTML document assigning it a symbolic name of <id>. To s
 	     as HTML, use save_HTML command (use of just save or saveas
 	     would change it to XHTML without changing the DOCTYPE
 	     declaration).
+
+END
+
+
+$HELP{'open_PIPE'}=[<<'END'];
+usage:       open_PIPE <id>=<expression>
+
+description: Run the system command resluting from interpoation of the <expression> and
+	     parse its output as XML, associating the resulting DOM tree
+	     with the given <id>.
 
 END
 

@@ -55,6 +55,7 @@ new
 nodebug
 open
 open_HTML
+open_PIPE
 parser_expands_entities
 parser_expands_xinclude
 pedantic_parser

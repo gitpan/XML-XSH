@@ -1,3 +1,128 @@
+2002-04-19  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* xsh: SIGINT handling changed
+
+	* lib/XML/XSH/Functions.pm: forget use IO::File;
+
+	* lib/XML/XSH/Functions.pm:
+	using gzip -c to compress files with .gz extension
+
+2002-04-17  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/Functions.pm: debug prints removed
+
+	* lib/XML/XSH/Functions.pm:
+	Allowed document() function to start and XPath expression.
+
+2002-03-27  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/Functions.pm: key/id xpath fixed
+
+2002-03-21  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/CompletionList.pm, lib/XML/XSH/Grammar.pm, lib/XML/XSH/Help.pm, lib/XML/XSH/Parser.pm:
+	updated
+
+	* lib/XML/XSH/Functions.pm:
+	keep_blanks by default (should be in LibXML, but is not in recent versions)
+
+	* lib/XML/XSH/Functions.pm, src/xsh_grammar.xml:
+	new command open_PIPE allows parsing XML output of a command
+
+2002-03-20  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* lib/XML/XSH/Functions.pm:
+	- implementation of new XSH grammar features
+	- charset conversion bug-fixes
+	- libxml related and other bugfixes
+
+	* src/xsh_grammar.xml:
+	- parser much faster now (because of better grammar trimming)
+	- if/uless/while/foreach for perl conditions too:
+	    if/unless/while/foreach { perl } { commands }
+	- open_HTML/save_HTML
+	- xupdate
+	- nodelist %v variables
+	- scalar variables may be used instead of ID on many places
+	- other bug fixes/improvements
+
+	* tools/gen_grammar.pl, src/recdescent.dtd:
+	repetition suffices supported
+
+	* lib/XML/XSH/Help.pm, lib/XML/XSH/CompletionList.pm, lib/XML/XSH/Grammar.pm, lib/XML/XSH/Parser.pm:
+	Re-generated.
+
+	* xsh: ~/.xshrc support (must contain XSH commands)
+
+	* Makefile.PL: XUpdate requirement added.
+
+2002-03-20  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* xsh_grammar.xml:
+	- parser much faster now (because of better grammar trimming)
+	- if/uless/while/foreach for perl conditions too:
+	    if/unless/while/foreach { perl } { commands }
+	- open_HTML/save_HTML
+	- xupdate
+	- nodelist %v variables
+	- scalar variables may be used instead of ID on many places
+	- other bug fixes/improvements
+
+	* recdescent.dtd: repetition suffices supported
+
+2002-03-20  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* Functions.pm: - implementation of new XSH grammar features
+	- charset conversion bug-fixes
+	- libxml related and other bugfixes
+
+	* Help.pm, CompletionList.pm, Grammar.pm, Parser.pm: Re-generated.
+
+2002-03-15  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* Functions.pm: package VERSION taken from Functions.pm
+
+	* Functions.pm:
+	Serious bug fixed in "insert attribute" and "insert element"
+	implementations. Also, namespaces should work a little better now.
+
+2002-03-14  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* Grammar.pm, Completion.pm: Minor change.
+
+	* Functions.pm: DOM tree navigation
+	Nodelist variables (%varname) introduced.
+	New functions locate and pwd return canonical XPATHs
+
+	* CompletionList.pm, Grammar.pm, Help.pm, Parser.pm:
+	Generated from XML source.
+
+2002-03-08  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* Functions.pm, Grammar.pm, Help.pm, Parser.pm: bug-fixes
+
+2002-03-06  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* CompletionList.pm: Namespace fixed.
+
+	* Completion.pm: bug fixed.
+
+	* CompletionList.pm: initial commit.
+
+	* Completion.pm:
+	Completion-list moved to a separate module (which is now auto
+	generated from XML source).
+
+2002-03-05  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
+
+	* Functions.pm: got rid of the ugly debug print
+
+	* Completion.pm: Initial commit.
+
+	* Functions.pm, Grammar.pm, Help.pm, Makefile, Parser.pm:
+	File was moved from XSH/ directory.
+	See the file of the same name in that directory for later revisions.
+
 2002-02-27  Petr Pajas  <pajas@ufal.ms.mff.cuni.cz>
 
 	* TODO: initial commit

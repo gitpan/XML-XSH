@@ -88,6 +88,7 @@ sub new {
 	  <production><ruleref ref="close_command"/></production>
 	  <production><ruleref ref="open_command"/></production>
 	  <production><ruleref ref="openhtml_command"/></production>
+	  <production><ruleref ref="openpipe_command"/></production>
 	  <production><ruleref ref="validate_command"/></production>
 	  <production><ruleref ref="valid_command"/></production>
 	  <production><ruleref ref="list_dtd_command"/></production>
@@ -1694,7 +1695,7 @@ sub new {
 	<ruleref ref="id_or_var"/>
 	<regexp>\s*=\s*</regexp>
 	<ruleref ref="filename"/>
-	<action>[\&amp;XML::XSH::Functions::open_doc,@item[2,4],1]</action>
+	<action>[\&amp;XML::XSH::Functions::open_doc,@item[2,4],'html']</action>
       </production>
       <documentation>
 	<usage>open_HTML <xref linkend='ID'/>=<xref
@@ -1710,6 +1711,31 @@ sub new {
 	<see-also>
 	  <ruleref ref="savehtml_command"/>
 	  <ruleref ref="open_command"/>
+	</see-also>
+      </documentation>
+    </rule>
+    <rule type='command' id="openpipe_command" name="open_PIPE">
+      <production>
+	<selfref/>
+	<ruleref ref="id_or_var"/>
+	<regexp>\s*=\s*</regexp>
+	<ruleref ref="expression"/>
+	<action>[\&amp;XML::XSH::Functions::open_doc,@item[2,4],'pipe']</action>
+      </production>
+      <documentation>
+	<usage>open_PIPE <xref linkend='ID'/>=<xref
+	    linkend='expression'/></usage>
+	<description>
+	  <para>
+	    Run the system command resluting from interpoation of the <xref
+	    linkend='expression'/> and parse its output as XML,
+	    associating the resulting DOM tree with the given <xref
+	    linkend="ID"/>.
+	  </para>
+	</description>
+	<see-also>
+	  <ruleref ref="open_command"/>
+	  <ruleref ref="openhtml_command"/>
 	</see-also>
       </documentation>
     </rule>

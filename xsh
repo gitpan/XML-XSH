@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- cperl -*-
 
-# $Id: xsh,v 1.4 2002/03/20 17:49:54 pajas Exp $
+# $Id: xsh,v 1.5 2002/04/19 18:23:38 pajas Exp $
 
 use FindBin;
 use lib ("$FindBin::RealBin", "$FindBin::RealBin/../lib",
@@ -28,7 +28,7 @@ require Term::ReadLine if $opt_i;
 BEGIN {
   getopts('scqdfhViE:e:');
   $VERSION='0.9';
-  $REVISION='$Revision: 1.4 $';
+  $REVISION='$Revision: 1.5 $';
   $ENV{PERL_READLINE_NOWARN}=1;
 }
 
@@ -85,7 +85,7 @@ if ($@) {
 }
 
 if ($opt_i) {
-  $SIG{INT}=sub {  print STDERR "\nCtrl-C pressed. Type exit to quit.\n"; };
+  $XML::XSH::Functions::TRAP_SIGINT=1;
   unless ($opt_q) {
     my $rev=$REVISION;
     $rev=~s/\s*\$//g;

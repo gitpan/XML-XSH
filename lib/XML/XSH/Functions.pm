@@ -1,4 +1,4 @@
-# $Id: Functions.pm,v 1.7 2002/03/20 17:59:40 pajas Exp $
+# $Id: Functions.pm,v 1.15 2002/04/19 18:27:00 pajas Exp $
 
 package XML::XSH::Functions;
 
@@ -8,15 +8,16 @@ no warnings;
 use XML::LibXML;
 use Text::Iconv;
 use XML::XSH::Help;
+use IO::File;
 
 use Exporter;
 use vars qw/@ISA @EXPORT_OK %EXPORT_TAGS $VERSION $OUT $LOCAL_ID $LOCAL_NODE
             $_xsh $_parser $_encoding $_qencoding %_nodelist
-            $_quiet $_debug $_test $_newdoc $_indent $SIGSEGV_SAFE
+            $_quiet $_debug $_test $_newdoc $_indent $SIGSEGV_SAFE $TRAP_SIGINT
             %_doc %_files %_iconv %_defs/;
 
 BEGIN {
-  $VERSION='1.3';
+  $VERSION='1.4';
 
   @ISA=qw(Exporter);
   @EXPORT_OK=qw(&xsh_init &xsh
@@ -28,6 +29,7 @@ BEGIN {
   %EXPORT_TAGS = (default => [@EXPORT_OK]);
 
   $SIGSEGV_SAFE=0;
+  $TRAP_SIGINT=0;
   $_indent=1;
   $_encoding='iso-8859-2';
   $_qencoding='iso-8859-2';
@@ -51,6 +53,7 @@ sub xsh_init {
   $_parser = XML::LibXML->new();
   $_parser->load_ext_dtd(1);
   $_parser->validation(1);
+  $_parser->keep_blanks(1);
 
   if (eval { require XML::XSH::Parser; }) {
     $_xsh=XML::XSH::Parser->new();
@@ -146,8 +149,13 @@ sub set_encoding { $_encoding=expand($_[0]); return 1; }
 sub set_qencoding { $_qencoding=expand($_[0]); return 1; }
 
 sub sigint {
-  $OUT->print("\nCtrl-C pressed. \n");
-  die "Interrupted by user.";
+  if ($TRAP_SIGINT) {
+    $OUT->print("\nCtrl-C pressed. \n");
+    die "Interrupted by user.";
+  } else {
+    print STDERR "\nCtrl-C pressed. \n";
+    exit 1;
+  }
 };
 
 
@@ -482,7 +490,8 @@ sub get_doc {
 # create a new document by parsing a file
 sub open_doc {
   my ($id,$file)=expand @_[0,1];
-  my $as_html=$_[2];
+  my $format=$_[2];
+
   print STDERR "open [$file] as [$id]\n" if "$_debug";
   $file=expand($file);
   $id=_id($id);
@@ -491,17 +500,22 @@ sub open_doc {
     print STDERR "hint: open identifier=file-name\n" unless "$_quiet";
     return;
   }
-  if (-f $file || $file=~/^[a-z]+:/) { # || (-f ($file="$file.gz"))) {
+  if ($format eq 'pipe' || -f $file || $file=~/^[a-z]+:/) { # || (-f ($file="$file.gz"))) {
     print STDERR "parsing $file\n" unless "$_quiet";
     eval {
       local $SIG{INT}=\&sigint;
       my $doc;
-      if ($as_html) {
+      if ($format eq 'html') {
 	$doc=$_parser->parse_html_file($file);
 	# WORKAROUND
 	# THIS IS A WORKAROUND UNTIL LibXML IS FIXED
 	$doc=$_parser->parse_string(join "\n", map { $_->toString() } $doc->childNodes());
 	# WORKAROUND
+      } elsif ($format eq 'pipe') {
+	local *F;
+	open F,"$file|";
+	$doc=$_parser->parse_fh(\*F);
+	close F;
       } else {
 	$doc=$_parser->parse_file($file);
       }
@@ -546,8 +560,14 @@ sub save_as {
   $file=$_files{$id} if $file eq "";
   print STDERR "$id=$_files{$id} --> $file ($enc)\n" unless "$_quiet";
   $enc=$doc->getEncoding() unless ($enc ne "");
-  local *F;
-  $file=~/^\s*[|>]/ ? open(F,$file) : open(F,">$file");
+  my $F;
+  if ($file=~/^\s*[|>]/) {
+    $F=IO::File->new($file);
+  } elsif ($file=~/.gz\s*$/) {
+    $F=IO::File->new("| gzip -c > $file");
+  } else {
+    $F=IO::File->new(">$file");
+  }
   eval {
     local $SIG{INT}=\&sigint;
     my $conv=mkconv($doc->getEncoding(),$enc);
@@ -558,8 +578,8 @@ sub save_as {
     } else {
       $t=$doc->toString($_indent);
     }
-    print F $t;
-    close F;
+    $F->print($t);
+    $F->close();
     $_files{$id}=$file unless $file=~/^\s*[|>]/; # no change in case of pipe
   };
   print STDERR "saved $id=$_files{$id} as $file in $enc encoding\n" unless ($@ or "$_quiet");
@@ -573,14 +593,20 @@ sub save_as_html {
   $file=$_files{$id} if $file eq "";
   print STDERR "$id=$_files{$id} --HTML--> $file ($enc)\n" unless "$_quiet";
   $enc=$doc->getEncoding() unless ($enc ne "");
-  local *F;
-  $file=~/^\s*[|>]/ ? open(F,$file) : open(F,">$file");
+  my $F;
+  if ($file=~/^\s*[|>]/) {
+    $F=IO::File->new($file);
+  } elsif ($file=~/.gz\s*$/) {
+    $F=IO::File->new("| gzip -c > $file");
+  } else {
+    $F=IO::File->new(">$file");
+  }
   eval {
     local $SIG{INT}=\&sigint;
     my $conv=mkconv($doc->getEncoding(),$enc);
-    print F "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n";
-    print F $conv->convert($doc->toStringHTML());
-    close F;
+    $F->print("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n");
+    $F->print($conv->convert($doc->toStringHTML()));
+    $F->close();
   };
   print STDERR "saved $id=$_files{$id} as HTML $file in $enc encoding\n" unless ($@ or "$_quiet");
   return _check_err($@);
@@ -833,7 +859,8 @@ sub insert_node {
     }
   } else {
     my $copy=$node->cloneNode(1);
-    $copy->setOwnerDocument($dest_doc);
+#    $copy->setOwnerDocument($dest_doc);
+    $dest_doc->importNode($copy);
     if ($where eq 'after') {
       $dest->parentNode()->insertAfter($copy,$dest);
     } elsif ($where eq 'as_child') {
@@ -1535,7 +1562,7 @@ sub XML::LibXML::Document::findnodes {
     my ($self, $xpath) = @_;
     my $dom=$self->getDocumentElement();
 
-    if ($xpath!~m/^\s*\//) {
+    if ($xpath!~m/^\s*\// and $xpath!~m/^\s*(?:id|document|key)\s*\(/) {
       $xpath='/'.$xpath;
     }
     my @nodes = $dom->findnodes($xpath);
@@ -1546,6 +1573,13 @@ sub XML::LibXML::Document::findnodes {
       return XML::LibXML::NodeList->new(@nodes);
     }
 }
+
+sub XML::LibXML::Document::find {
+  my ($self, $xpath) = @_;
+  my $dom=$self->getDocumentElement();
+  return $dom->find($xpath);
+}
+
 
 package Text::Iconv::Dummy;
 

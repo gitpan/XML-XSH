@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- cperl -*-
 
-# $Id: xsh,v 1.3 2002/03/14 17:33:37 pajas Exp $
+# $Id: xsh,v 1.4 2002/03/20 17:49:54 pajas Exp $
 
 use FindBin;
 use lib ("$FindBin::RealBin", "$FindBin::RealBin/../lib",
@@ -14,7 +14,8 @@ package main;
 use strict;
 
 use Getopt::Std;
-use vars qw/$opt_q $opt_i $opt_h $opt_V $opt_E $opt_e $opt_d $opt_c $opt_s/;
+use vars qw/$opt_q $opt_i $opt_h $opt_V $opt_E $opt_e $opt_d $opt_c $opt_s
+            $opt_f/;
 use vars qw/$VERSION $REVISION/;
 
 use IO::Handle;
@@ -25,9 +26,9 @@ use XML::XSH qw(&xsh_set_output &xsh &xsh_init &xsh_pwd &xsh_local_id
 require Term::ReadLine if $opt_i;
 
 BEGIN {
-  getopts('scqdhViE:e:');
+  getopts('scqdfhViE:e:');
   $VERSION='0.9';
-  $REVISION='$Revision: 1.3 $';
+  $REVISION='$Revision: 1.4 $';
   $ENV{PERL_READLINE_NOWARN}=1;
 }
 
@@ -38,6 +39,7 @@ if ($opt_h) {
   print "   -E   query encoding (default is the output encoding)\n\n";
   print "   -q   quiet\n\n";
   print "   -i   interactive\n\n";
+  print "   -f   ignore ~/.xshrc\n\n";
   print "   -d   print debug messages\n\n";
   print "   -c   compile (parse) only and report errors\n\n";
   print "   -s   try to prevent XML::LibXML segmentation faults\n\n";
@@ -69,6 +71,18 @@ XML::XSH::Functions::set_local_xpath(['scratch','/']);
 
 my $string=join " ",@ARGV;
 my $l;
+
+eval {
+  if (-r "$ENV{HOME}/.xshrc") {
+    open INI,"$ENV{HOME}/.xshrc" || die "cannot open $ENV{HOME}/.xshrc";
+    xsh(join("",<INI>));
+    close INI;
+  }
+};
+if ($@) {
+  print STDERR "Error occured while reading ~/.xshrc\n";
+  print STDERR "$@\n";
+}
 
 if ($opt_i) {
   $SIG{INT}=sub {  print STDERR "\nCtrl-C pressed. Type exit to quit.\n"; };

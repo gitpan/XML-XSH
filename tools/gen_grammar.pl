@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: gen_grammar.pl,v 1.2 2002/03/14 17:32:06 pajas Exp $
+# $Id: gen_grammar.pl,v 1.3 2002/03/20 17:53:15 pajas Exp $
 
 use strict;
 use XML::LibXML;
@@ -95,6 +95,9 @@ sub create_rule_production {
       $result.=">";
     } elsif ($name eq 'ruleref') {
       $result.=" ".$item->getAttribute('ref');
+      if ($item->getAttribute('rep') ne "") {
+	$result.="(".$item->getAttribute('rep').")";
+      }
     } elsif ($name eq 'literal') {
       $result.=" '".get_text($item)."'";
     } elsif ($name eq 'action') {

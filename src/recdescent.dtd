@@ -81,8 +81,11 @@
 <!--                    Sub-Rule                                   -->
 <!--                    Ruleref reference                          -->
 <!ELEMENT  ruleref      EMPTY                                        >
+<!--         rep        repetition suffix                          -->
 <!ATTLIST  ruleref
-             ref        IDREF                              #REQUIRED >
+             ref        IDREF                              #REQUIRED
+             rep        CDATA                              #IMPLIED  >
+
 <!--                    Literal                                    -->
 <!--                    Literal value                              -->
 <!ELEMENT  literal      (#PCDATA)                                    >

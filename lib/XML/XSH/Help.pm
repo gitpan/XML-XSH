@@ -1,5 +1,5 @@
 # This file was automatically generated from src/xsh_grammar.xml on 
-# Thu Mar 14 14:41:31 2002
+# Wed Mar 20 18:50:24 2002
 
 package XML::XSH::Help;
 use strict;
@@ -9,42 +9,64 @@ use vars qw($HELP %HELP);
 $HELP=<<'END';
 General notes:
 
-  More than one command may be used on one line. In that case the commands
-  must be separated by semicolon which has to be preceded by white-space.
+  Commands must be separated with a semicolon, or with a pipeline
+  redirection. In the interactive shell, use slash in the end of line to
+  indicate that the command follows on next line.
 
-  Any command or set of commands may be followed by a pipeline filter (like
-  in a Unix shell) to process its output
+  Pipeline redirection may be used to redirect command output into 1) any
+  unix command or 2) XSH variable. It consists of
 
-Example: which counts any attributes that contain string foo in its name or
-  value.
+  1) a pipeline character `|' followed by any unix command and its
+  parameters (which are considered to span across the whole rest of the
+  line), or
+
+Example: Count any attributes that contain string foo in its name or value.
 
   xsh> list //words/attribute() | grep foo | wc
 
-  Many commands have aliases. See help <command> for a list.
+  2) of a pair of characters `|>' followed by an XSH variable name
 
-  You may navigate in documents with `cd' command followed by XPath much
-  like on your filesystem.
+Example: Store the number of all words in a variable named count.
 
-  In the interactive shell use slash in the end of line to indicate that
-  the command follows on next line.
+  xsh> count //words |> $count
 
-  Argument types: command-block, enc-string, expression, filename, id,
-  location, parameter-list, perl-code, xpath
+  You may navigate in documents with `cd' command followed by an XPath
+  expression (much like in your filesystem).
 
-  Available commands: assign, call, cd, clone, close, complete_attributes,
-  copy, count, create, debug, def, defs, dtd, encoding, eval, exec, exit,
-  files, foreach, help, if, include, indent, insert, keep_blanks, lcd,
-  list, load_ext_dtd, locate, map, move, nodebug, open,
-  parser_expands_entities, parser_expands_xinclude, pedantic_parser, print,
-  print_enc_command, process_xinclude, pwd, query-encoding, quiet, remove,
-  run-mode, save, saveas, select, test-mode, unless, valid, validate,
-  validation, variables, verbose, version, while, xcopy, xinsert,
-  xmove_command, xslt
+  Type `help command' to get a list of all XSH commands.
 
-  Type help <command|type> to get more information on a given command or
-  argument type.
+  Type `help type' to get a list of all argument types.
+
+  Type help followed by a command or type name to get more information on
+  the particular command or argument type.
 
 END
+
+$HELP{'command'}=[<<'END'];
+List of XSH commands
+
+description: assign, call, cd, clone, close, complete_attributes, copy, count, create,
+	     debug, def, defs, dtd, encoding, eval, exec, exit, files,
+	     foreach, help, if, include, indent, insert, keep_blanks, lcd,
+	     list, load_ext_dtd, locate, map, move, nodebug, open,
+	     open_HTML, parser_expands_entities, parser_expands_xinclude,
+	     pedantic_parser, print, print_enc_command, process_xinclude,
+	     pwd, query-encoding, quiet, remove, run-mode, save, save_HTML,
+	     saveas, select, test-mode, unless, valid, validate,
+	     validation, variables, verbose, version, while, xcopy,
+	     xinsert, xmove_command, xslt, xupdate
+
+END
+
+
+$HELP{'type'}=[<<'END'];
+List of command argument types
+
+description: command-block, enc-string, expression, filename, id, location, perl-code,
+	     type, xpath
+
+END
+
 
 $HELP{'expression'}=[<<'END'];
 expression argument type
@@ -114,168 +136,17 @@ Example:     Open a document and count all chapters containing a subsection
 END
 
 
-$HELP{'quiet'}=[<<'END'];
-usage:       quiet
+$HELP{'perl-block'}=[<<'END'];
+Perl-block
 
-description: Turn off verbose messages.
+description: Perl-block is a block of arbitrary perl code encosed in curly brackets: {
+	     ... }
 
-END
 
+             map { $_=uc($_) } //chapter/title/text()
 
-$HELP{'verbose'}=[<<'END'];
-usage:       verbose
 
-description: Turn on verbose messages.
-
-END
-
-
-$HELP{'test-mode'}=[<<'END'];
-usage:       test-mode
-
-description: Switch into test mode in which no commands are actually executed and only
-	     command syntax is checked.
-
-END
-
-
-$HELP{'run-mode'}=[<<'END'];
-usage:       run-mode
-
-description: Switch into normal XSH mode in which all commands are executed.
-
-END
-
-
-$HELP{'debug'}=[<<'END'];
-usage:       debug
-
-description: Turn on debugging messages.
-
-END
-
-
-$HELP{'nodebug'}=[<<'END'];
-usage:       nodebug
-
-description: Turn off debugging messages.
-
-END
-
-
-$HELP{'version'}=[<<'END'];
-usage:       version
-
-description: Prints program version as well as versions of XML::XSH::Functions,
-	     XML::LibXML, and XML::LibXSLT modules used.
-
-END
-
-
-$HELP{'validation'}=[<<'END'];
-usage:       validation <expression>
-
-description: Turn on validation during the parse process if the <expression> is
-	     non-zero or off otherwise. Defaults to on.
-
-END
-
-
-$HELP{'parser_expands_entities'}=[<<'END'];
-usage:       parser_expands_entities <expression>
-
-description: Turn on the entity expansion during the parse process if the <expression>
-	     is non-zero on or off otherwise. If entity expansion is off,
-	     any external parsed entities in the document are left as
-	     entities. Defaults to on.
-
-END
-
-
-$HELP{'keep_blanks'}=[<<'END'];
-usage:       keep_blanks <expression>
-
-description: Allows you to turn off XML::LibXML's default behaviour of maintaining
-	     whitespace in the document. Non-zero expression forces the XML
-	     parser to preserve all whitespace.
-
-END
-
-
-$HELP{'pedantic_parser'}=[<<'END'];
-usage:       pedantic_parser <expression>
-
-description: If you wish, you can make XML::LibXML more pedantic by passing a non-zero
-	     <expression> to this command.
-
-END
-
-
-$HELP{'complete_attributes'}=[<<'END'];
-usage:       complete_attributes <expression>
-
-description: If the expression is non-zero, this command allows XML parser to complete
-	     the elements attributes lists with the ones defaulted from the
-	     DTDs. By default, this option is enabled.
-
-END
-
-
-$HELP{'indent'}=[<<'END'];
-usage:       indent <expression>
-
-description: Format the XML output while saving a document.
-
-END
-
-
-$HELP{'parser_expands_xinclude'}=[<<'END'];
-usage:       parser_expands_xinclude <expression>
-
-description: If the <expression> is non-zero, the parser is allowed to expand XIinclude
-	     tags imidiatly while parsing the document.
-
-END
-
-
-$HELP{'load_ext_dtd'}=[<<'END'];
-usage:       load_ext_dtd <expression>
-
-description: If the expression is non-zero, XML parser loads external DTD subsets while
-	     parsing. By default, this option is enabled.
-
-END
-
-
-$HELP{'encoding'}=[<<'END'];
-usage:       encoding <enc-string>
-
-description: Set the default output character encoding.
-
-END
-
-
-$HELP{'query-encoding'}=[<<'END'];
-usage:       query-encoding <enc-string>
-
-description: Set the default query character encoding.
-
-END
-
-
-$HELP{'command'}=[<<'END'];
-List of XSH commands
-
-description: assign, call, cd, clone, close, complete_attributes, copy, count, create,
-	     debug, def, defs, dtd, encoding, eval, exec, exit, files,
-	     foreach, help, if, include, indent, insert, keep_blanks, lcd,
-	     list, load_ext_dtd, locate, map, move, nodebug, open,
-	     parser_expands_entities, parser_expands_xinclude,
-	     pedantic_parser, print, print_enc_command, process_xinclude,
-	     pwd, query-encoding, quiet, remove, run-mode, save, saveas,
-	     select, test-mode, unless, valid, validate, validation,
-	     variables, verbose, version, while, xcopy, xinsert,
-	     xmove_command, xslt
+             foreach { grep /A[xyz]/ glob ('*.xml') } { f=$__; select f; call process_file }
 
 END
 
@@ -299,11 +170,12 @@ END
 
 
 $HELP{'if'}=[<<'END'];
-usage:       if <xpath><command-block>
+usage:       if <xpath>|<perl-block>
+	  <command-block>
 
-description: Execute <command-block> if the given <xpath> expression evaluates to a
-	     non-emtpty node-list, true boolean-value, non-zero number or
-	     non-empty literal.
+description: Execute <command-block> if the given <xpath> or <perl-block> expression
+	     evaluates to a non-emtpty node-list, true boolean-value,
+	     non-zero number or non-empty literal.
 
 END
 
@@ -311,17 +183,17 @@ END
 $HELP{'unless'}=[<<'END'];
 usage:       unless
 
-description: Like if but negating the result of the <xpath> expression.
+description: Like if but negating the result of the expression.
 
 END
 
 
 $HELP{'while'}=[<<'END'];
-usage:       while <xpath> <command-block>
+usage:       while <xpath>|<perl-block> <command-block>
 
-description: Execute <command-block> as long as the given <xpath> expression evaluates
-	     to a non-emtpty node-list, true boolean-value, non-zero number
-	     or non-empty literal.
+description: Execute <command-block> as long as the given <xpath> or <perl-block>
+	     expression evaluates to a non-emtpty node-list, true
+	     boolean-value, non-zero number or non-empty literal.
 
 Example:     The commands have the same results
 
@@ -332,19 +204,33 @@ END
 
 
 $HELP{'foreach'}=[<<'END'];
-usage:       foreach <xpath> <command-block>
+usage:       foreach <xpath>|<perl-block> <command-block>
 
-description: Execute the command-block for each of the nodes matching the given <xpath>
-	     expression so that all relative <xpath> expressions of the
-	     command relate to the selected node.
+aliases:     for
+
+description: If the first argument is an <xpath> expression, execute the command-block
+	     for each node matching the expression making it temporarily
+	     the current node, so that all relative XPath expressions are
+	     evaluated in its context.
+
+	     If the first argument is a <perl-block>, it is evaluated and
+	     the resulting perl-list is iterated setting the variable $__
+	     to be each element of the list in turn. It works much like
+	     perl's foreach, except that the variable used consists of two
+	     underscores.
 
 Example:     Move all employee elements in a company element into a staff
 	     subelement of the same company
 
              xsh> foreach //company xmove ./employee into ./staff;
 
+Example:     List content of all XML files in current directory
+
+             xsh> foreach { glob('*.xml') } { open f=$__; list f:/; }
+
 END
 
+$HELP{'for'}=$HELP{foreach};
 
 $HELP{'def'}=[<<'END'];
 usage:       def <id> <command-block>
@@ -460,14 +346,14 @@ END
 $HELP{'variables'}=[<<'END'];
 usage:       variables
 
-aliases:     var vars
+aliases:     vars var
 
 description: List all defined variables and their values.
 
 END
 
-$HELP{'var'}=$HELP{variables};
 $HELP{'vars'}=$HELP{variables};
+$HELP{'var'}=$HELP{variables};
 
 $HELP{'copy'}=[<<'END'];
 usage:       copy <xpath> <location> <xpath>
@@ -855,6 +741,17 @@ description: Open a new document assigning it a symbolic name of <id>. To identi
 END
 
 
+$HELP{'open_HTML'}=[<<'END'];
+usage:       open_HTML <id>=<filename>
+
+description: Open a new HTML document assigning it a symbolic name of <id>. To save it
+	     as HTML, use save_HTML command (use of just save or saveas
+	     would change it to XHTML without changing the DOCTYPE
+	     declaration).
+
+END
+
+
 $HELP{'create'}=[<<'END'];
 usage:       create <id> <expression>
 
@@ -887,6 +784,18 @@ usage:       save <id> [encoding <enc-string>]
 
 description: Save the document identified by <id> to its original XML file, possibly
 	     converting it from its original encoding to <enc-string>.
+
+END
+
+
+$HELP{'save_HTML'}=[<<'END'];
+usage:       save_HTML <id> <filename> [encoding <enc-string>]
+
+description: Save the document identified by <id> as a HTML file named <filename>,
+	     possibly converting it from its original encoding to
+	     <enc-string> Note, that this does just the character
+	     conversion, so you must specify the correct encoding in the
+	     META tag yourself.
 
 END
 
@@ -993,6 +902,175 @@ $HELP{'locate'}=[<<'END'];
 usage:       locate <xpath>
 
 description: Print canonical XPaths leading to nodes matched by the <xpath> given.
+
+END
+
+
+$HELP{'xupdate'}=[<<'END'];
+usage:       xupdate <id> [<id>]
+
+description: Modify the current document or the document specified by the second <id>
+	     argument according to XUpdate commands of the first <id>
+	     document. XUpdate is a XML Update Language which aims to be a
+	     language for updating XML documents.
+
+	     XUpdate langauge is described in XUpdate Working Draft at
+	     http://www.xmldb.org/xupdate/xupdate-wd.html.
+
+	     XUpdate output can be generated for example by Python xmldiff
+	     utility from http://www.logilab.org/xmldiff/. Unfortunatelly,
+	     there are few bugs (or, as I tend to say In case of Python,
+	     white-space problems) in their code, so its XUpdate output is
+	     not always correct.
+
+END
+
+
+$HELP{'verbose'}=[<<'END'];
+usage:       verbose
+
+description: Turn on verbose messages.
+
+END
+
+
+$HELP{'test-mode'}=[<<'END'];
+usage:       test-mode
+
+description: Switch into test mode in which no commands are actually executed and only
+	     command syntax is checked.
+
+END
+
+
+$HELP{'run-mode'}=[<<'END'];
+usage:       run-mode
+
+description: Switch into normal XSH mode in which all commands are executed.
+
+END
+
+
+$HELP{'debug'}=[<<'END'];
+usage:       debug
+
+description: Turn on debugging messages.
+
+END
+
+
+$HELP{'nodebug'}=[<<'END'];
+usage:       nodebug
+
+description: Turn off debugging messages.
+
+END
+
+
+$HELP{'version'}=[<<'END'];
+usage:       version
+
+description: Prints program version as well as versions of XML::XSH::Functions,
+	     XML::LibXML, and XML::LibXSLT modules used.
+
+END
+
+
+$HELP{'validation'}=[<<'END'];
+usage:       validation <expression>
+
+description: Turn on validation during the parse process if the <expression> is
+	     non-zero or off otherwise. Defaults to on.
+
+END
+
+
+$HELP{'parser_expands_entities'}=[<<'END'];
+usage:       parser_expands_entities <expression>
+
+description: Turn on the entity expansion during the parse process if the <expression>
+	     is non-zero on or off otherwise. If entity expansion is off,
+	     any external parsed entities in the document are left as
+	     entities. Defaults to on.
+
+END
+
+
+$HELP{'keep_blanks'}=[<<'END'];
+usage:       keep_blanks <expression>
+
+description: Allows you to turn off XML::LibXML's default behaviour of maintaining
+	     whitespace in the document. Non-zero expression forces the XML
+	     parser to preserve all whitespace.
+
+END
+
+
+$HELP{'pedantic_parser'}=[<<'END'];
+usage:       pedantic_parser <expression>
+
+description: If you wish, you can make XML::LibXML more pedantic by passing a non-zero
+	     <expression> to this command.
+
+END
+
+
+$HELP{'complete_attributes'}=[<<'END'];
+usage:       complete_attributes <expression>
+
+description: If the expression is non-zero, this command allows XML parser to complete
+	     the elements attributes lists with the ones defaulted from the
+	     DTDs. By default, this option is enabled.
+
+END
+
+
+$HELP{'indent'}=[<<'END'];
+usage:       indent <expression>
+
+description: Format the XML output while saving a document.
+
+END
+
+
+$HELP{'parser_expands_xinclude'}=[<<'END'];
+usage:       parser_expands_xinclude <expression>
+
+description: If the <expression> is non-zero, the parser is allowed to expand XIinclude
+	     tags imidiatly while parsing the document.
+
+END
+
+
+$HELP{'load_ext_dtd'}=[<<'END'];
+usage:       load_ext_dtd <expression>
+
+description: If the expression is non-zero, XML parser loads external DTD subsets while
+	     parsing. By default, this option is enabled.
+
+END
+
+
+$HELP{'encoding'}=[<<'END'];
+usage:       encoding <enc-string>
+
+description: Set the default output character encoding.
+
+END
+
+
+$HELP{'query-encoding'}=[<<'END'];
+usage:       query-encoding <enc-string>
+
+description: Set the default query character encoding.
+
+END
+
+
+$HELP{'quiet'}=[<<'END'];
+usage:       quiet
+
+description: Turn off verbose messages.
 
 END
 

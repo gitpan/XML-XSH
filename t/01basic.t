@@ -20,7 +20,11 @@ while count(//foo)<10 { insert element "<foo bar='$bar\' count=${{count(//foo)}}
 
 count count(//foo)=10;
 
-count count(//foo[@bar="8"])=1;
+insert attribute bar=8 into //foo[3]
+
+count count(//foo[@bar="8"])=2;
+
+map { $_=1 } //foo[3]/@bar
 
 count count(//foo[@count and @bar=string(@count)-1])>0;
 

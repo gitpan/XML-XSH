@@ -33,6 +33,7 @@ eval
 exec
 exit
 files
+for
 foreach
 help
 if
@@ -53,6 +54,7 @@ mv
 new
 nodebug
 open
+open_HTML
 parser_expands_entities
 parser_expands_xinclude
 pedantic_parser
@@ -71,6 +73,7 @@ remove
 rm
 run-mode
 save
+save_HTML
 saveas
 sed
 select
@@ -98,6 +101,7 @@ xmv
 xsl
 xslt
 xsltproc
+xupdate
 );
 
 1;

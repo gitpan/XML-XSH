@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # -*- cperl -*-
 
-# $Id: xsh,v 1.8 2002/08/30 17:08:13 pajas Exp $
+# $Id: xsh,v 1.15 2002/11/07 09:43:00 pajas Exp $
 
 use FindBin;
 use lib ("$FindBin::RealBin", "$FindBin::RealBin/../lib",
@@ -15,7 +15,7 @@ use strict;
 
 use Getopt::Std;
 use vars qw/$opt_q $opt_w $opt_i $opt_h $opt_V $opt_E $opt_e $opt_d $opt_c $opt_s
-            $opt_f $opt_g/;
+            $opt_f $opt_g $opt_v $opt_t $opt_T/;
 use vars qw/$VERSION $REVISION/;
 
 use IO::Handle;
@@ -27,9 +27,9 @@ use XML::XSH qw(&xsh_set_output &xsh_get_output &xsh &xsh_init
 require Term::ReadLine if $opt_i;
 
 BEGIN {
-  getopts('scqgwdfhViE:e:');
+  getopts('tscqgvwdfhViTE:e:');
   $VERSION='0.9';
-  $REVISION='$Revision: 1.8 $';
+   $REVISION='$Revision: 1.15 $';
   $ENV{PERL_READLINE_NOWARN}=1;
 }
 
@@ -41,12 +41,15 @@ if ($opt_h) {
   print "   -E   query encoding (default is the output encoding)\n\n";
   print "   -q   quiet\n\n";
   print "   -i   interactive\n\n";
+  print "   -t   read commands from stdin\n",
+        "        (default is on unless there are commands on the command-line)\n\n";
   print "   -f   ignore ~/.xshrc\n\n";
   print "   -d   print debug messages\n\n";
   print "   -c   compile (parse) only and report errors\n\n";
-  print "   -s   try to prevent XML::LibXML segmentation faults\n\n";
+  print "   -v   start with validation 1 and load_ext_dtd 1\n\n";
   print "   -w   start with validation 0 and load_ext_dtd 0\n\n";
   print "   -V   print version\n\n";
+  print "   -T   trace grammar\n\n";
   print "   -h   help\n\n";
   exit 1;
 }
@@ -54,13 +57,17 @@ if ($opt_h) {
 if ($opt_V) {
   my $rev=$REVISION;
   $rev=~s/\s*\$//g;
-  print "$XML::XSH::Functions::VERSION/$VERSION ($rev)\n";
+  my $funcrev=$XML::XSH::Functions::REVISION;
+  $funcrev=~s/\s*\$//g;
+  print "xsh $VERSION ($rev)\n";
+  print "XML::XSH::Functions $XML::XSH::Functions::VERSION ($funcrev)\n";
   exit 1;
 }
 
 $::RD_ERRORS = 1; # Make sure the parser dies when it encounters an error
 $::RD_WARN   = 1; # Enable warnings. This will warn on unused rules &c.
 $::RD_HINT   = 1; # Give out hints to help fix problems.
+$::RD_TRACE   = $opt_T; # Give out hints to help fix problems.
 
 my $module;
 if ($opt_g) {
@@ -68,23 +75,25 @@ if ($opt_g) {
 } else {
   $module="XML::XSH::LibXMLCompat"
 }
-
 xsh_init($module);
 
 set_opt_q($opt_q);
 set_opt_d($opt_d);
 set_opt_c($opt_c);
 
-if ($opt_w) {
-  XML::XSH::Functions::set_validation(0);
-  XML::XSH::Functions::set_load_ext_dtd(0);
-}
-
 $XML::XSH::Functions::SIGSEGV_SAFE=$opt_s;
 
 my $doc=XML::XSH::Functions::create_doc("scratch","scratch");
 #XML::XSH::Functions::set_last_id("scratch");
 XML::XSH::Functions::set_local_xpath(['scratch','/']);
+
+if ($opt_w) {
+  XML::XSH::Functions::set_validation(0);
+  XML::XSH::Functions::set_load_ext_dtd(0);
+} elsif ($opt_v) {
+  XML::XSH::Functions::set_validation(1);
+  XML::XSH::Functions::set_load_ext_dtd(1);
+}
 
 my $string=join " ",@ARGV;
 my $l;
@@ -102,11 +111,9 @@ if ($@) {
 }
 
 if ($opt_i) {
-  $SIG{INT}=sub {
-    xsh_get_output()->print("\nCtrl-C pressed. Type exit to exit.\n");
-    xsh_get_output()->print(prompt());
-  };
   $XML::XSH::Functions::TRAP_SIGINT=1;
+  $XML::XSH::Functions::TRAP_SIGPIPE=1;
+  $XML::XSH::Functions::_die_on_err=0;
   unless ($opt_q) {
     my $rev=$REVISION;
     $rev=~s/\s*\$//g;
@@ -118,6 +125,8 @@ if ($opt_i) {
     print STDERR "This is free software, you may use it and distribute it under\n";
     print STDERR "either the GNU GPL Version 2, or under the Perl Artistic License.\n";
   }
+} else {
+  $XML::XSH::Functions::_die_on_err=1;
 }
 
 if ($string) {
@@ -135,7 +144,7 @@ if ($opt_i) {
        eval {
 	 print STDERR "saving $ENV{HOME}/.xsh_history\n";
 	 open HIST,"> $ENV{HOME}/.xsh_history" || die "cannot open $ENV{HOME}/.xsh_history";
-	 print HIST join("\n",@readline::rl_History),"\n";
+	 print HIST join("\n",$term->GetHistory()),"\n";
 	 close HIST;
        };
        if ($@) {
@@ -157,13 +166,11 @@ if ($opt_i) {
     print STDERR "$@\n";
   }
 
-  XML::XSH::Completion::cpl();
+#  XML::XSH::Completion::cpl();
   if ($term->ReadLine eq "Term::ReadLine::Gnu") {
-    my $attribs = $term->Attribs;
-    $attribs->{attempted_completion_function} = \&XML::XSH::Completion::gnu_cpl;
+    $term->Attribs->{attempted_completion_function} = \&XML::XSH::Completion::gnu_cpl;
   } else {
-    $readline::rl_completion_function =
-      $readline::rl_completion_function = 'XML::XSH::Completion::cpl';
+    $readline::rl_completion_function = 'XML::XSH::Completion::cpl';
   }
 
   xsh_set_output($term->OUT) if ($term->OUT);
@@ -171,23 +178,48 @@ if ($opt_i) {
     print STDERR "Using terminal type: ",$term->ReadLine,"\n";
       print STDERR "Hint: Type `help' or `help | less' to get more help.\n";
   }
-  while (defined ($l = $term->readline(prompt()))) {
+  while (defined ($l=get_line($term,prompt(),''))) {
     while ($l=~/\\+\s*$/) {
       $l=~s/\\+\s*$//;
-      $l .= $term->readline('> ');
+      my $a=get_line($term,'> ',undef);
+      if (defined($a)) {
+	$l.=$a
+      } else {
+	$l='';
+      }
     }
     if ($l=~/\S/) {
       xsh($l);
-      $term->addhistory($l);
+#      $term->addhistory($l);
     }
   }
 
-} elsif ($string eq "") {
-
+} elsif ($string eq "" or $opt_t) {
   xsh(join "",<STDIN>);
 }
 
 print STDERR "Good bye!\n" if $opt_i and not "$opt_q";
+
+# get a line of input from ReadLine
+# if ^C interruption by user occures return $retonint
+#
+sub get_line {
+  my ($term,$prompt,$retonint)=@_;
+  my $line;
+  $SIG{INT}=sub { die 'TRAP-SIGINT'; };
+  eval {
+    $line = $term->readline($prompt);
+  };
+  if ($@) {
+    if ($@ =~ /TRAP-SIGINT/) {
+      print "\n" unless $term->ReadLine eq 'Term::ReadLine::Perl'; # clear screen
+      return $retonint;
+    } else {
+      die $@;
+    }
+  }
+  return $line;
+}
 
 sub prompt {
   return 'xsh '.xsh_local_id().":".xsh_pwd().'> ';

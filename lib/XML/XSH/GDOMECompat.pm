@@ -1,4 +1,4 @@
-# $Id: GDOMECompat.pm,v 1.4 2002/08/30 17:10:37 pajas Exp $
+# $Id: GDOMECompat.pm,v 1.7 2002/10/25 16:01:39 pajas Exp $
 
 package XML::XSH::GDOMECompat;
 
@@ -29,8 +29,23 @@ sub toStringUTF8 {
   }
 }
 
+sub owner_document {
+  my ($self,$node)=@_;
+  if ($self->is_document($node)) {
+    return $node
+  } else {
+    return $node->getOwnerDocument()
+  }
+}
+
 sub doc_URI {
   return undef;
+}
+
+sub set_encoding {
+  my ($class,$dom,$encoding)=@_;
+  croak "Changing document encoding not supported by GDOME\n";
+  return;
 }
 
 sub doc_encoding {
@@ -86,6 +101,21 @@ sub parser_options {
 
 sub parse_html_file {
   croak "HTML parsing not supported by GDOME\n";
+  return undef;
+}
+
+sub parse_html_fh {
+  croak "HTML parsing not supported by GDOME\n";
+  return undef;
+}
+
+sub parse_sgml_file {
+  croak "DOCBOOK parsing not supported by GDOME\n";
+  return undef;
+}
+
+sub parse_sgml_fh {
+  croak "DOCBOOK parsing not supported by GDOME\n";
   return undef;
 }
 
@@ -159,9 +189,9 @@ sub is_pi {
   return $node->nodeType == PROCESSING_INSTRUCTION_NODE;
 }
 
-sub is_entity {
+sub is_entity_reference {
   my ($class,$node)=@_;
-  return $node->nodeType == ENTITY_NODE;
+  return $node->nodeType == ENTITY_REFERENCE_NODE;
 }
 
 sub is_document {
@@ -169,7 +199,7 @@ sub is_document {
   return $node->nodeType == DOCUMENT_NODE;
 }
 
-sub is_document {
+sub is_document_fragment {
   my ($class,$node)=@_;
   return $node->nodeType == DOCUMENT_FRAGMENT_NODE;
 }
@@ -187,6 +217,11 @@ sub is_namespace {
 sub get_dtd {
   die "Not implemented for GDOME\n";
 }
+
+sub has_dtd {
+  0;
+}
+
 
 sub clone_node {
   my ($class, $dom, $node)=@_;

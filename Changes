@@ -1,0 +1,39 @@
+Changes since 1.5
+
+Requires:
+  - XML::LibXML 1.54
+
+New features:
+  - local (temporary) variables
+  - subroutine may take parameters
+  - forward defs (with no body) allow recursion
+  - call strongly checks argument types
+  - new location keywords: append, prepend
+  - new location semantics (mostly clean-up)
+  - perl-code result substitution in expressions using ${{{ ... }}}
+  - string xpath result substitution in expressions using ${( ... )}
+  - new Perl functions: literal, xml_list and count
+  - new switch-to-new-documents flag (allows to disable selecting
+  - simplified and more general open/save commands
+  - support document level node insertion
+  - improved error reporting from XSH grammar parser
+  - docbook loading support
+  - pipeline redirection may follow statements
+  - grammar optimizations (some more speed-up achieved)
+
+Other changes:
+  - XSH now starts with validation 0
+  - new xsh option -v allows starting with validation on
+  - obsolete xsh -c flag removed
+  - documentation enhancements
+
+Bug fixes:
+  - indentation fixes
+  - fixed ReadLine::Gnu completion support
+  - ~/.xsh_history works for Term::ReadLine::Gnu now
+  - fixed doubled history entries
+  - double/single quoting fixed in expressions
+  - experimental support for entity reference insertion
+  - fixed error catching
+  - fixed and improved Ctrl+C handling
+  - some more bug-fixes

@@ -1,8 +1,12 @@
-# xsh
+#!xsh
+# -*- cperl -*-
 
 if ("$xsh_grammar_file" = "") $xsh_grammar_file="src/xsh_grammar.xml";
 if ("$db_stylesheet" = "") {
-  perl { ($db_stylesheet)=split(/\n/,`locate html/docbook.xsl`); };
+  # weired things happen in XML::LibXML/LibXSLT with new stylesheets!
+  $db_stylesheet="http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl";
+
+#  perl { ($db_stylesheet)=split(/\n/,`locate html/docbook.xsl`); };
   echo "Using DocBook XML stylesheet: $db_stylesheet"
 }
 if ("$db_stylesheet" = "") {
@@ -11,17 +15,21 @@ if ("$db_stylesheet" = "") {
 }
 if ("$html_stylesheet"="") $html_stylesheet="style.css";
 
-X = $xsh_grammar_file;
-parser-completes-attributes 1;
-indent 1;
-validation 0;
 quiet;
+load-ext-dtd 1;
+validation 1;
+parser-completes-attributes 1;
+
+open X = $xsh_grammar_file;
+
+validation 0;
+indent 1;
 
 def transform_section {
-  map { s/^[ \t]+//; s/\n[ \t]+/\n/g; } %section//code/text();
-  foreach %section//code/tab {
+  map { s/^[ \t]+//; s/\n[ \t]+/\n/g; } %section//code/descendant::text();
+  foreach %section//code/descendant::tab {
     perl { $ws='  ' x count('string(@count)'); };
-    insert text $ws instead of %section//code/tab;
+    insert text $ws instead of .;
   }
   map { $_='programlisting' } %section//code;
   foreach %section//xref {
@@ -45,7 +53,7 @@ def transform_section {
     map { $_="s_".$_.".html" } @url;
   }
   xslt S $db_stylesheet H params html.stylesheet="'$html_stylesheet'";
-#  clone H=H;
+  clone H=H;
   xadd attribute target=_self into H://*[name()='a'];
   # move content of <a name="">..</a> out, so that it does not behave
   # as a link in browsers
@@ -53,8 +61,8 @@ def transform_section {
     xmove ./node() after .;
   }
   for %section/@id {
-    save_HTML H "doc/s_${{string(.)}}.html";
-    saveas S "doc/s_${{string(.)}}.xml";
+    save_HTML H "doc/frames/s_${{string(.)}}.html";
+    saveas S "doc/frames/s_${{string(.)}}.xml";
   }
   close H;
 }
@@ -93,7 +101,7 @@ new I "<html>
      </noframes>
   </frameset>
 </html>";
-save_HTML I 'doc/index.html';
+save_HTML I 'doc/frames/index.html';
 close I;
 
 new S "<section id='intro'><title>Getting Started</title></section>";
@@ -121,7 +129,7 @@ foreach X:/recdescent-xml/doc/section {
   }
   xcopy ./node() into %section;
 
-  %rules=X:(//rule[documentation[id(@sections)[@id='$id']]]);
+  %rules=X:(/recdescent-xml/rules/rule[documentation[id(@sections)[@id='$id']]]);
   if %rules[@type='command'] { $c='Commands' } else { $c='' }
   if %rules[@type='argtype'] { $a='Argument Types' } else { $a='' }
   if ('$c' != '' and '$a' != '') { $t='$a and $c' } else { $t='$a$c' }
@@ -142,7 +150,7 @@ foreach X:/recdescent-xml/doc/section {
   call transform_section;
 }
 
-save_HTML T "doc/t_syntax.html";
+save_HTML T "doc/frames/t_syntax.html";
 close T;
 
 # COMMANDS AND TYPES
@@ -193,9 +201,9 @@ foreach { qw(command type) } {
     if (./aliases) {
       add chunk "<simplesect><title>Aliases</title><para><literal> </literal></para></simplesect>" into %section;
       foreach (./aliases/alias) {
-	copy ./@name after %section/simplesect[last()]/para/literal/text()[last()];
+	copy ./@name append %section/simplesect[last()]/para/literal/text()[last()];
 	if (following-sibling::alias) {
-	  add text ", " after %section/simplesect[last()]/para/literal/text()[last()];;
+	  add text ", " append %section/simplesect[last()]/para/literal/text()[last()];;
 	}
       }
     }
@@ -226,13 +234,13 @@ foreach { qw(command type) } {
       };
       foreach %section/simplesect[last()]/para/xref {
 	if (following-sibling::xref) {
-	  add text ", " after .;
+	  add text ", " after . ;
 	}
       }
     }
     call transform_section;
     close S;
   }
-  save_HTML T "doc/t_${__}.html";
+  save_HTML T "doc/frames/t_${__}.html";
   close T;
 };

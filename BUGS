@@ -1,0 +1,7 @@
+KNOWN BUGS
+
+- there are some know issues concerning 
+  combination XML::LibXML and XML::LibXSLT which
+  may affect XSH when using xslt command, but in most
+  cases, xslt works fine.
+

@@ -1,5 +1,5 @@
 # This file was automatically generated from src/xsh_grammar.xml on 
-# Mon Sep  2 17:38:12 2002
+# Sun Nov  3 21:23:38 2002
 
 
 package XML::XSH::Grammar;
@@ -13,7 +13,11 @@ $grammar=<<'_EO_GRAMMAR_';
 
   
   command:
-	    /(backups)/
+	    ... /\s*[}{;]/ <commit> <reject>
+	  | /(switch-to-new-documents|switch_to_new_documents)\s/ expression
+		{ [\&XML::XSH::Functions::set_cdonopen,$item[2]] }
+  	
+	  | /(backups)/
 		{ [\&XML::XSH::Functions::set_backups,1] }
   	
 	  | /(nobackups)/
@@ -112,12 +116,6 @@ $grammar=<<'_EO_GRAMMAR_';
 	  | /(close)\s/ <commit> expression
 		{ [\&XML::XSH::Functions::close_doc,$item[3]] }
   	
-	  | /(open-HTML|open_HTML)\s/ <commit> id_or_var /\s*=\s*/ filename
-		{ [\&XML::XSH::Functions::open_doc,@item[3,5],'html'] }
-  	
-	  | /(open-PIPE|open_PIPE)\s/ <commit> id_or_var /\s*=\s*/ expression
-		{ [\&XML::XSH::Functions::open_doc,@item[3,5],'pipe'] }
-  	
 	  | /(validate)/ <commit> optional_expression(?)
 		{ [\&XML::XSH::Functions::validate_doc,@{$item[3]}] }
   	
@@ -142,17 +140,11 @@ $grammar=<<'_EO_GRAMMAR_';
 	  | /(perl|eval)\s/ <commit> perl_code
 		{ [\&XML::XSH::Functions::print_eval,$item[3]] }
   	
-	  | /(saveas|save-as|save_as)\s/ <commit> expression filename encoding_param(?)
-		{ [\&XML::XSH::Functions::save_as,@item[3,4],@{$item[5]}] }
+	  | /save(as|_as|-as)?((\s*|_|-)(HTML|html|XML|xml|XINCLUDE|Xinclude|xinclude))?((\s*|_|-)(FILE|file|PIPE|pipe|STRING|string))?/ expression filename encoding_param(?)
+		{ [\&XML::XSH::Functions::save_doc,@item[1,2,3,4]] }
   	
-	  | /(save-xinclude|save_xinclude)\s/ <commit> expression encoding_param(?)
-		{ [\&XML::XSH::Functions::save_xinclude,$item[3],@{$item[4]}] }
-  	
-	  | /(save-HTML|save_HTML)\s/ <commit> expression filename encoding_param(?)
-		{ [\&XML::XSH::Functions::save_as_html,@item[3,4],@{$item[5]}] }
-  	
-	  | /(save)\s/ <commit> expression encoding_param(?)
-		{ [\&XML::XSH::Functions::save_as,$item[3],@{$item[4]}] }
+	  | /save(as|_as|-as)?((\s*|_|-)(HTML|html|XML|xml|XINCLUDE|Xinclude|xinclude))?((\s*|_|-)(FILE|file|STRING|string))?/ <commit> expression encoding_param(?)
+		{ [\&XML::XSH::Functions::save_doc,@item[1,3],undef,$item[4]] }
   	
 	  | /(files)/
 		{ [\&XML::XSH::Functions::files] }
@@ -172,9 +164,6 @@ $grammar=<<'_EO_GRAMMAR_';
 	  | /(exec|system)\s/ <commit> expression(s)
 		{ [\&XML::XSH::Functions::sh,join(" ",@{$item[3]})] }
   	
-	  | /(call)\s/ <commit> expression
-		{ [\&XML::XSH::Functions::call,$item[3]] }
-  	
 	  | /(include|\.)\s/ <commit> filename
 		{ [\&XML::XSH::Functions::include,$item[3]] }
   	
@@ -186,14 +175,26 @@ $grammar=<<'_EO_GRAMMAR_';
 	   )(?) nodelistvariable '=' xpath
 		{ [\&XML::XSH::Functions::nodelist_assign,$item[2],$item[4]] }
   	
+	  | /(local)\s/ variable '=' xpath
+		{ [\&XML::XSH::Functions::xpath_assign_local,$item[2],$item[4]] }
+  	
+	  | /(local)\s/ nodelistvariable '=' xpath
+		{ [\&XML::XSH::Functions::nodelist_assign_local,$item[2],$item[4]] }
+  	
+	  | /(local)\s/ anyvariable(s)
+		{ [\&XML::XSH::Functions::make_local,@{$item[2]}] }
+  	
 	  | variable
 		{ [\&XML::XSH::Functions::print_var,$item[1]] }
   	
 	  | /(variables|vars|var)/
 		{ [\&XML::XSH::Functions::variables] }
   	
-	  | /(print|echo)\s/ <commit> expression(s?)
-		{ [\&XML::XSH::Functions::echo,@{$item[3]}] }
+	  | /(print|echo)\s/ expression(s)
+		{ [\&XML::XSH::Functions::echo,@{$item[2]}] }
+  	
+	  | /(print|echo)/
+		{ [\&XML::XSH::Functions::echo] }
   	
 	  | /(create|new)\s/ <commit> expression expression
 		{ [\&XML::XSH::Functions::create_doc,@item[3,4]] }
@@ -205,7 +206,7 @@ $grammar=<<'_EO_GRAMMAR_';
 		{ [\&XML::XSH::Functions::set_local_xpath,[$item[3],"/"]] }
   	
 	  | /(if)\s/ <commit> condition command
-		{ [\&XML::XSH::Functions::if_statement,$item[3],[$item[4]]] }
+		{ [\&XML::XSH::Functions::if_statement,[$item[3],[$item[4]]]] }
   	
 	  | /(unless)\s/ <commit> condition command
 		{ [\&XML::XSH::Functions::unless_statement,$item[3],[$item[4]]] }
@@ -215,9 +216,6 @@ $grammar=<<'_EO_GRAMMAR_';
   	
 	  | /(foreach|for)\s/ <commit> condition command
 		{ [\&XML::XSH::Functions::foreach_statement,$item[3],[$item[4]]] }
-  	
-	  | /(def|define)\s/ <commit> ID block
-		{ [\&XML::XSH::Functions::def,$item[3],$item[4]] }
   	
 	  | /(process-xinclude|process_xinclude|process-xincludes|process_xincludes|xinclude|xincludes|load_xincludes|load-xincludes|load_xinclude|load-xinclude)/ <commit> optional_expression(?)
 		{ [\&XML::XSH::Functions::process_xinclude,@{$item[3]}] }
@@ -234,8 +232,8 @@ $grammar=<<'_EO_GRAMMAR_';
 	  | /(xupdate)\s/ <commit> expression expression(?)
 		{ [\&XML::XSH::Functions::xupdate,$item[3],@{$item[4]}] }
   	
-	  | /(open)\s/ <commit> id_or_var /\s*=\s*/ filename
-		{ [\&XML::XSH::Functions::open_doc,@item[3,5]] }
+	  | /open((\s*|_|-)(HTML|XML|DOCBOOK|html|xml|docbook))?((\s*|_|-)(FILE|file|PIPE|pipe|STRING|string))?/ <commit> id_or_var /\s*=\s*/ expression
+		{ [\&XML::XSH::Functions::open_doc,@item[3,5,1]] }
   	
 	  | ID /\s*=\s*/ <commit> filename
 		{ [\&XML::XSH::Functions::open_doc,@item[1,4]] }
@@ -246,44 +244,62 @@ $grammar=<<'_EO_GRAMMAR_';
 	  | /(unfold)\s/ xpath
 		{ [\&XML::XSH::Functions::mark_unfold,$item[2]] }
   	
+	  | call_command
 
   statement:
-	   ( if
-	  | unless
-	  | while
-	  | foreach
-	  | def
-	   )
-		{ $item[1] }
+	    ... /\s*[}{;]/ <commit> <reject>
+	  | /(if)\s/ <commit> condition block elsif_block else_block
+		{ [\&XML::XSH::Functions::if_statement,[$item[3],$item[4]],@{$item[5]},@{$item[6]}] }
   	
-	  | <error>
+	  | /(unless)\s/ <commit> condition block else_block(?)
+		{ [\&XML::XSH::Functions::unless_statement,$item[3],$item[4],@{$item[5]}] }
+  	
+	  | /(while)\s/ <commit> condition block
+		{ [\&XML::XSH::Functions::while_statement,$item[3],$item[4]] }
+  	
+	  | /(foreach|for)\s/ <commit> condition block
+		{ [\&XML::XSH::Functions::foreach_statement,$item[3],$item[4]] }
+  	
 
   complex_command:
 	    ';'
-	  | command trail(?)
+	  | statement <commit> trail(?)
+		{ 
+	  if (scalar(@{$item[3]})) {
+	    if ($item[3][0][0] eq 'pipe') {
+  	      $return=[\&XML::XSH::Functions::pipe_command,[$item[1]],$item[3][0][1]]
+	    } else {
+   	      $return=[\&XML::XSH::Functions::string_pipe_command,[$item[1]],$item[3][0][1]]
+	    }
+          } else {
+            $return=$item[1]
+          }
+	 }
+  	
+	  | command <commit> trail(?)
 	  ( ';'
 	  | ... /^\s*(}|\Z)/
 	   )
 		{ 
-	  my $r=$item[1];
-	  if (scalar(@{$item[2]})) {
-	    if ($item[2][0][0] eq 'pipe') {
-  	      $r=[\&XML::XSH::Functions::pipe_command,[$r],$item[2][0][1]]
+	  if (scalar(@{$item[3]})) {
+	    if ($item[3][0][0] eq 'pipe') {
+  	      $return=[\&XML::XSH::Functions::pipe_command,[$item[1]],$item[3][0][1]]
 	    } else {
-   	      $r=[\&XML::XSH::Functions::string_pipe_command,[$r],$item[2][0][1]]
+   	      $return=[\&XML::XSH::Functions::string_pipe_command,[$item[1]],$item[3][0][1]]
 	    }
+          } else {
+            $return=$item[1]
           }
-	  $r
 	 }
   	
-	  | <error>
+	  | <error:Parse error near: "}.substr($text,0,40).qq{ ...">
 
   statement_or_command:
-	    statement
+	    def
 	  | complex_command
 
   block:
-	    '{' <commit> statement_or_command(s) '}'
+	    '{' <commit> complex_command(s) '}'
 		{ [grep ref,@{$item[3]}] }
   	
 
@@ -301,7 +317,8 @@ $grammar=<<'_EO_GRAMMAR_';
 		{ 
 	  local $_=$item[1];
 	  s/^\'|\'$//g;
-	  s/\\([^\$])/$1/g;
+	  s{(\\)(.|\n)|([\$])}{ ($3 eq "\$") ? "\\\$" : (($2 eq "\\")
+	  ? "\\\\" : (($2 eq "'") ? "'" : ( ($2 eq "\$") ? "\\\\\\$2" : "\\\\$2"))) }eg;
 	  $_;
 	 }
   	
@@ -311,7 +328,6 @@ $grammar=<<'_EO_GRAMMAR_';
 		{ 
 	  local $_=$item[1];
 	  s/^\"|\"$//g;
-	  s/\\(.)/$1/g;
 	  $_;
 	 }
   	
@@ -323,7 +339,9 @@ $grammar=<<'_EO_GRAMMAR_';
 	  | double_quoted_string
 
   exp_inline_count:
-	    /\${{([^}]|}[^}])*}}/
+	    /\$\{\((.+?)\)\}/
+	  | /\$\{\{\{(.+?)\}\}\}/
+	  | /\$\{\{([^{].*?)\}\}/
 
   expression:
 	    exp_part <skip:""> expression(?)
@@ -368,13 +386,16 @@ $grammar=<<'_EO_GRAMMAR_';
 	  | xp
 		{ [undef,$item[1]] }
   	
-	  | <error>
+	  | <error:expected ID:XPath or XPath, but got "}.substr(0,40,$text).qq{ ...">
 
   xpcont:
 	   ( xpfilters
 	  | xpbrackets
 	   ) <skip:""> xp(?)
 		{ $item[1].join("",@{$item[3]}) }
+  	
+	  | xp
+		{ $item[1] }
   	
 
   xp:
@@ -422,7 +443,7 @@ $grammar=<<'_EO_GRAMMAR_';
 	    /'[^']*'|"[^"]*"/
 
   xpsimple:
-	    /[^]|"' [();]+/
+	    /[^]}|"' [();]+/
 	  | xpbrackets
 
   perl_expression:
@@ -434,6 +455,11 @@ $grammar=<<'_EO_GRAMMAR_';
   	
 
   nodelistvariable:
+	    '%' <skip:""> ID
+		{ $item[3] }
+  	
+
+  loosenodelistvariable:
 	    '%' <skip:""> id_or_var
 		{ $item[3] }
   	
@@ -445,10 +471,10 @@ $grammar=<<'_EO_GRAMMAR_';
 
   startrule:
 	    shell <commit> eof
-		{ XML::XSH::Functions::run_commands($item[1]) }
+		{ XML::XSH::Functions::run_commands($item[1],1) }
   	
-	  | statement_or_command(s) eof
-		{ XML::XSH::Functions::run_commands($item[1]) }
+	  | statement_or_command(s) <commit> eof
+		{ XML::XSH::Functions::run_commands($item[1],1) }
   	
 
   trail:
@@ -476,42 +502,100 @@ $grammar=<<'_EO_GRAMMAR_';
   	
 
   shell:
-	    /!\s*/ /.*/
-		{ [[\&XML::XSH::Functions::sh,$item[2]]] }
+	    /!\s*/ <commit> /.*/
+		{ [[\&XML::XSH::Functions::sh,$item[3]]] }
   	
+	  | <error?:Parse error near: "! }.substr(0,40,$text).qq{ ..."> <reject>
 
   condition:
 	    <perl_codeblock>
 	  | xpath
 
+  elsif_block:
+	    /(elsif)\s/ <commit> condition block elsif_block
+		{ [[$item[3],$item[4]],@{$item[5]}] }
+  	
+	  | ...! /(elsif)/
+		{ [] }
+  	
+	  | <uncommit> <error:Parse error near keyword elsif: "}.substr(0,40,$text).qq{ ...">
+
   else_block:
 	    /(else)\s/ <commit> block
-		{ $item[3] }
+		{ [[undef,$item[3]]] }
   	
-
-  if:
-	    /(if)\s/ <commit> condition block else_block(?)
-		{ [\&XML::XSH::Functions::if_statement,$item[3],$item[4],@{$item[5]}] }
+	  | ...! /(else)/
+		{ [] }
   	
+	  | <uncommit> <error:Parse error near keyword else: "}.substr(0,40,$text).qq{ ...">
 
-  unless:
-	    /(unless)\s/ <commit> condition block else_block(?)
-		{ [\&XML::XSH::Functions::unless_statement,$item[3],$item[4],@{$item[5]}] }
-  	
-
-  while:
-	    /(while)\s/ <commit> condition block
-		{ [\&XML::XSH::Functions::while_statement,$item[3],$item[4]] }
-  	
-
-  foreach:
-	    /(foreach|for)\s/ <commit> condition block
-		{ [\&XML::XSH::Functions::foreach_statement,$item[3],$item[4]] }
+  typedvariable:
+	    /[\$\%]/ <skip:""> ID
+		{ "$item[1]$item[3]" }
   	
 
   def:
-	    /(def|define)\s/ <commit> ID block
-		{ [\&XML::XSH::Functions::def,$item[3],$item[4]] }
+	    /(def|define)\s/ <commit> ID typedvariable(s?) block(?)
+		{ 
+	  &XML::XSH::Functions::def($item[3],$item[5],$item[4]);
+	 }
+  	
+	  | <error?:Parse error near: "}.substr(0,40,$text).qq{ ..."> <reject>
+
+  anyvariable:
+	    variable
+		{ ['$',$item[1]] }
+  	
+	  | nodelistvariable
+		{ ['%',$item[1]] }
+  	
+
+  match_typedargs:
+	   
+		{ 
+	  $return = ((@arg and $arg[0]<=$#arg and $arg[$arg[0]]=~m/^%/) 
+	            ? $arg[$arg[0]] : undef)
+	 }
+  	 xpath match_typedargs[$arg[0]+1,@arg[1..$#arg]]
+		{ 
+	  $return=(defined($item[3]) ? [$item[2],@{$item[3]}] : undef);
+	 }
+  	
+	  |
+		{ 
+	  $return = ((@arg and $arg[0]<=$#arg and $arg[$arg[0]]=~m/^\$/)
+  	            ? $arg[$arg[0]] : undef)
+	 }
+  	 expression match_typedargs[$arg[0]+1,@arg[1..$#arg]]
+		{ 
+	  $return=(defined($item[3]) ? [$item[2],@{$item[3]}] : undef);
+	 }
+  	
+	  |
+		{ 
+	  $return= (($arg[0]==$#arg+1) ? [] : undef);
+	 }
+  	
+
+  subroutine_arguments:
+	   
+		{ 
+	  if (exists($XML::XSH::Functions::_defs{$arg[0]})) {
+	    $return=[ @{$XML::XSH::Functions::_defs{$arg[0]}} ];
+	    shift @$return;
+          } else { 
+	    $return=undef;
+	  }
+	 }
+  	
+	  | <error:Call to undefined subroutine $arg[0]!>
+
+  call_command:
+	    <rulevar:@args>
+	  | /(call)\s/ <commit> ID subroutine_arguments[$item[3]] match_typedargs[1,@{$item[4]}]
+		{ 
+	  $return=[\&XML::XSH::Functions::call,$item[3],$item[5]]
+	 }
   	
 
   xslt_params:
@@ -539,8 +623,14 @@ $grammar=<<'_EO_GRAMMAR_';
 	  | /before\s/
 		{ "before" }
   	
-	  | /(to|into|as child( of)?)\s/
-		{ "as_child" }
+	  | /(in)?to\s/
+		{ "into" }
+  	
+	  | /(append(ing)?|as\s+(a\s+)child(\s+of)?)\s/
+		{ "append" }
+  	
+	  | /(prepend(ing)?|(as\s+)(the\s+)first(\s+child(\s+of)?)?)\s/
+		{ "prepend" }
   	
 	  | /(replace|instead( of)?)\s/
 		{ "replace" }

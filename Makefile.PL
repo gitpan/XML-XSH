@@ -11,9 +11,9 @@ WriteMakefile(
     'VERSION_FROM' => 'lib/XML/XSH/Functions.pm',
     'EXE_FILES' => ['xsh'],
     'PREREQ_PM' => {
-		    'XML::LibXML' => 1.52,
+		    'XML::LibXML' => 1.54,
 		    'Parse::RecDescent' => 1.79,
-		    'XML::XUpdate::LibXML' => 0.2.3,
+		    'XML::XUpdate::LibXML' => 0.3.0,
 		   },
      AUTHOR       => 'Petr Pajas (pajas@matfyz.cz)',
      ABSTRACT     => 'XML Editing Shell',
@@ -35,6 +35,7 @@ xml:
 
 docs:
 	./xsh < tools/gen_reference.xsh
+	./xsh < tools/gen_doc.xsh
 '
 }
 

@@ -1,4 +1,4 @@
-# $Id: LibXMLCompat.pm,v 1.4 2002/08/30 17:10:37 pajas Exp $
+# $Id: LibXMLCompat.pm,v 1.7 2002/10/25 16:01:50 pajas Exp $
 
 package XML::XSH::LibXMLCompat;
 
@@ -17,7 +17,7 @@ sub version {
 sub toStringUTF8 {
   my ($class,$node,$mode)=@_;
   if ($class->is_document($node)) {
-    return encodeToUTF8($node->getEncoding(),$node->toString($mode));
+    return XML::LibXML::encodeToUTF8($node->getEncoding(),$node->toString($mode));
   } else {
     return $node->can('toString') ? $node->toString($mode) : $node->to_literal();
   }
@@ -25,6 +25,15 @@ sub toStringUTF8 {
 
 sub new_parser {
   return XML::LibXML->new();
+}
+
+sub owner_document {
+  my ($self,$node)=@_;
+  if ($self->is_document($node)) {
+    return $node
+  } else {
+    return $node->ownerDocument()
+  }
 }
 
 sub doc_URI {
@@ -37,6 +46,11 @@ sub doc_encoding {
   return $dom->getEncoding();
 }
 
+sub set_encoding {
+  my ($class,$dom,$encoding)=@_;
+  return $dom->setEncoding($encoding);
+}
+
 sub xml_equal {
   my ($class,$a,$b)=@_;
   return $a->isSameNode($b);
@@ -44,7 +58,9 @@ sub xml_equal {
 
 sub count_xpath {
   my ($class,$node,$xp)=@_;
-  my $result=$node->find($xp);
+  my $result;
+  $result=$node->find($xp);
+
   if (ref($result)) {
     if ($result->isa('XML::LibXML::NodeList')) {
       return $result->size();
@@ -66,31 +82,49 @@ sub doc_process_xinclude {
 
 sub init_parser {
   my ($class,$parser)=@_;
-  $parser->validation($XML::XSH::Functions::VALIDATION);
-  $parser->recover($XML::XSH::Functions::RECOVERING) if $parser->can('recover');
-  $parser->expand_entities($XML::XSH::Functions::EXPAND_ENTITIES);
-  $parser->keep_blanks($XML::XSH::Functions::KEEP_BLANKS);
-  $parser->pedantic_parser($XML::XSH::Functions::PEDANTIC_PARSER);
-  $parser->load_ext_dtd($XML::XSH::Functions::LOAD_EXT_DTD);
-  $parser->complete_attributes($XML::XSH::Functions::COMPLETE_ATTRIBUTES);
-  $parser->expand_xinclude($XML::XSH::Functions::EXPAND_XINCLUDE);
+   $parser->validation($XML::XSH::Functions::VALIDATION);
+   $parser->recover($XML::XSH::Functions::RECOVERING) if $parser->can('recover');
+   $parser->expand_entities($XML::XSH::Functions::EXPAND_ENTITIES);
+   $parser->keep_blanks($XML::XSH::Functions::KEEP_BLANKS);
+   $parser->pedantic_parser($XML::XSH::Functions::PEDANTIC_PARSER);
+   $parser->load_ext_dtd($XML::XSH::Functions::LOAD_EXT_DTD);
+   $parser->complete_attributes($XML::XSH::Functions::COMPLETE_ATTRIBUTES);
+   $parser->expand_xinclude($XML::XSH::Functions::EXPAND_XINCLUDE);
 }
 
 
 sub parse_string {
   my ($class,$parser,$str)=@_;
   $class->init_parser($parser);
-  return $parser->parse_string($str);
+   return $parser->parse_string($str);
 }
 
 sub parse_html_file {
   my ($class,$parser,$file)=@_;
   $class->init_parser($parser);
   my $doc=$parser->parse_html_file($file);
-  # WORKAROUND
-  # THIS WAS A WORKAROUND FOR A BUG, NOW LibXML SEEMS FIXED
-  #  $doc=$parser->parse_string(join "\n", map { $_->toString() } $doc->childNodes());
-  # WORKAROUND
+  return $doc;
+}
+
+sub parse_html_fh {
+  my ($class,$parser,$fh)=@_;
+  $class->init_parser($parser);
+  print STDERR ("$parser $fh\n");
+  my $doc=$parser->parse_html_fh($fh);
+  return $doc;
+}
+
+sub parse_sgml_file {
+  my ($class,$parser,$file,$encoding)=@_;
+  $class->init_parser($parser);
+  my $doc=$parser->parse_sgml_file($file,$encoding);
+  return $doc;
+}
+
+sub parse_sgml_fh {
+  my ($class,$parser,$fh,$encoding)=@_;
+  $class->init_parser($parser);
+  my $doc=$parser->parse_sgml_fh($fh,$encoding);
   return $doc;
 }
 
@@ -108,80 +142,90 @@ sub parse_file {
 
 sub is_xinclude_start {
   my ($class,$node)=@_;
-  return $node->nodeType == XML_XINCLUDE_START();
+  return $node->nodeType == XML::LibXML::XML_XINCLUDE_START();
 }
 
 sub is_xinclude_end {
   my ($class,$node)=@_;
-  return $node->nodeType == XML_XINCLUDE_END();
+  return $node->nodeType == XML::LibXML::XML_XINCLUDE_END();
 }
 
 sub is_element {
   my ($class,$node)=@_;
-  return $node->nodeType == XML_ELEMENT_NODE();
+  return $node->nodeType == XML::LibXML::XML_ELEMENT_NODE();
 }
 
 sub is_attribute {
   my ($class,$node)=@_;
-  return $node->nodeType == XML_ATTRIBUTE_NODE();
+  return $node->nodeType == XML::LibXML::XML_ATTRIBUTE_NODE();
 }
 
 sub is_text {
   my ($class,$node)=@_;
-  return $node->nodeType == XML_TEXT_NODE();
+  return $node->nodeType == XML::LibXML::XML_TEXT_NODE();
 }
 
 sub is_text_or_cdata {
   my ($class,$node)=@_;
-  return $node->nodeType == XML_TEXT_NODE() || $node->nodeType == XML_CDATA_SECTION_NODE();
+  return $node->nodeType == XML::LibXML::XML_TEXT_NODE() || $node->nodeType == XML::LibXML::XML_CDATA_SECTION_NODE();
 }
 
 sub is_cdata_section {
   my ($class,$node)=@_;
-  return $node->nodeType == XML_CDATA_SECTION_NODE();
+  return $node->nodeType == XML::LibXML::XML_CDATA_SECTION_NODE();
 }
 
 
 sub is_pi {
   my ($class,$node)=@_;
-  return $node->nodeType == XML_PI_NODE();
+  return $node->nodeType == XML::LibXML::XML_PI_NODE();
 }
 
-sub is_entity {
+sub is_entity_reference {
   my ($class,$node)=@_;
-  return $node->nodeType == XML_ENTITY_NODE();
+  return $node->nodeType == XML::LibXML::XML_ENTITY_REF_NODE();
 }
 
 sub is_document {
   my ($class,$node)=@_;
-  return $node->nodeType == XML_DOCUMENT_NODE();
+  return $node->nodeType == XML::LibXML::XML_DOCUMENT_NODE();
 }
 
 sub is_document_fragment {
   my ($class,$node)=@_;
-  return $node->nodeType == XML_DOCUMENT_FRAG_NODE();
+  return $node->nodeType == XML::LibXML::XML_DOCUMENT_FRAG_NODE();
 }
 
 sub is_comment {
   my ($class,$node)=@_;
-  return $node->nodeType == XML_COMMENT_NODE;
+  return $node->nodeType == XML::LibXML::XML_COMMENT_NODE();
 }
 
 sub is_namespace {
   my ($class,$node)=@_;
-  return $node->nodeType == XML_NAMESPACE_DECL;
+  return $node->nodeType == XML::LibXML::XML_NAMESPACE_DECL();
+}
+
+sub has_dtd {
+  my ($class,$doc)=@_;
+  foreach my $node ($doc->childNodes()) {
+    if ($node->nodeType == XML::LibXML::XML_DTD_NODE()) {
+      return 1;
+    }
+  }
+  return 0;
 }
 
 sub get_dtd {
   my ($class,$doc,$quiet)=@_;
   my $dtd;
-  foreach ($doc->childNodes()) {
-    if ($_->nodeType == XML_DTD_NODE()) {
-      if ($_->hasChildNodes()) {
-	$dtd=$_;
+  foreach my $node ($doc->childNodes()) {
+    if ($node->nodeType == XML::LibXML::XML_DTD_NODE()) {
+      if ($node->hasChildNodes()) {
+	$dtd=$node;
       } elsif (get_load_ext_dtd()) {
-	my $str=$_->toString();
-	my $name=$_->getName();
+	my $str=$node->toString();
+	my $name=$node->getName();
 	my $public_id;
 	my $system_id;
 	if ($str=~/PUBLIC\s+(\S)([^\1]*\1)\s+(\S)([^\3]*)\3/) {

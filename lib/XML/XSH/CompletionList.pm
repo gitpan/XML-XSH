@@ -56,6 +56,7 @@ load-xincludes
 load_ext_dtd
 load_xinclude
 load_xincludes
+local
 locate
 ls
 map
@@ -65,10 +66,6 @@ new
 nobackups
 nodebug
 open
-open-HTML
-open-PIPE
-open_HTML
-open_PIPE
 options
 parser-completes-attributes
 parser-expands-entities
@@ -98,16 +95,11 @@ rm
 run-mode
 run_mode
 save
-save-HTML
-save-as
-save-xinclude
-save_HTML
-save_as
-save_xinclude
-saveas
 sed
 select
 sort
+switch-to-new-documents
+switch_to_new_documents
 system
 test-mode
 test_mode

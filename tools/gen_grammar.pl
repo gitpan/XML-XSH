@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: gen_grammar.pl,v 1.6 2002/09/02 15:47:54 pajas Exp $
+# $Id: gen_grammar.pl,v 1.9 2002/10/22 17:05:21 pajas Exp $
 
 use strict;
 use XML::LibXML;
@@ -49,8 +49,8 @@ sub get_text {
   my ($node,$no_strip)=@_;
   my $text="";
   foreach ($node->childNodes()) {
-    if ($_->nodeType() == XML_TEXT_NODE ||
-	$_->nodeType() == XML_CDATA_SECTION_NODE) {
+    if ($_->nodeType() == XML::LibXML::XML_TEXT_NODE ||
+	$_->nodeType() == XML::LibXML::XML_CDATA_SECTION_NODE) {
       $text.=$_->getData();
     }
   }
@@ -85,7 +85,7 @@ sub has_sibling {
   return $value;
 #   $node=$node->nextSibling();
 #   while ($node) {
-#     return 1 if ($node->nodeType == XML_ELEMENT_NODE
+#     return 1 if ($node->nodeType == XML::LibXML::XML_ELEMENT_NODE
 # 		 and
 # 		 $node->nodeName ne 'action'
 # 		 and
@@ -101,7 +101,7 @@ sub create_rule_production {
    my $result;
   my $name;
   foreach my $item ($prod->childNodes()) {
-    next unless $item->nodeType == XML_ELEMENT_NODE;
+    next unless $item->nodeType == XML::LibXML::XML_ELEMENT_NODE;
     $name=$item->nodeName();
     if ($name eq 'lookahead') {
       $result.=' ...' . ($item->getAttribute('negative') eq 'yes' ? '!' : '');
@@ -109,13 +109,18 @@ sub create_rule_production {
       $result.=" /".get_text($item)."/";
     } elsif ($name eq 'directive') {
       my $text=get_text($item);
-      $result.=" <".$item->getAttribute('type');
+      my $type=$item->getAttribute('type');
+      $type='error?' if ($type eq 'error-if-committed');
+      $result.=" <".$type;
       $result.=":$text" if ($text ne "");
       $result.=">";
     } elsif ($name eq 'ruleref') {
       $result.=" ".$item->getAttribute('ref');
       if ($item->getAttribute('rep') ne '') {
 	$result.="(".$item->getAttribute('rep').")";
+      }
+      if ($item->getAttribute('arguments') ne '') {
+	$result.="[".$item->getAttribute('arguments')."]";
       }
     } elsif ($name eq 'string') {
       $result.=" '".get_text($item)."'";

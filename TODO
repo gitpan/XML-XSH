@@ -1,11 +1,22 @@
+TODO:
+
+* get rid of the XSH subdirectory in the CVS tree
+* alias 'help commands' for 'help commands'?
+* document the installation process for ActiveState perl
 * support DTD modification
-* better support for namespaces
-+ allow entity reference insertion
-* allow parameters for user defined functions
-* split element
+* better support for namespaces (e.g. registering as soon as it's available
+  in XML::LibXML(::XPath?)
 * 'locate' - allow use also nearest id() 
-+ external xinclude save support
-* untag/split element
-* comment-out node (?? uncomment ??)
-* fold/unfold command (fold/unfold elements for subsequent ls commands)
 * xsh-grammar: parse xslt parameters as XPATH instead of XSH expressions ??
+* check the XML::LibXML module for XPath-ruled tree additions
+
+USER-LEVEL IMPLEMENTABLE
+
+- untag/split element                //(on user-level easy with def)
+- comment-out node (?? uncomment ??) //(on user-level easy with def)
+
+
+IMPLEMENTED BUT SOME MORE REFINEMENT IS NEEDED:
+
+o fold/unfold command (fold/unfold elements for subsequent ls commands)
+

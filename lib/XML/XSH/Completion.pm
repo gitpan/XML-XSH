@@ -1,4 +1,4 @@
-# $Id: Completion.pm,v 1.4 2002/03/14 17:39:24 pajas Exp $
+# $Id: Completion.pm,v 1.5 2002/10/22 16:48:32 pajas Exp $
 
 package XML::XSH::Completion;
 
@@ -8,15 +8,23 @@ use strict;
 sub cpl {
   my($word,$line,$pos) = @_;
   if ($line=~/^\s*[^=\s]*$/) {
-    return grep { index($_,$word)==0 } @XML::XSH::CompletionList::XSH_COMMANDS;
+     return grep { index($_,$word)==0 } @XML::XSH::CompletionList::XSH_COMMANDS;
   } else {
-    return map { s:\@$::; $_ } readline::rl_filename_list(@_);
+    return eval { map { s:\@$::; $_ } readline::rl_filename_list($_[0]); };
   }
 }
 
 sub gnu_cpl {
     my($text, $line, $start, $end) = @_;
-    my(@perlret) = cpl($text, $line, $start);
+    my(@perlret);
+    if ($line=~/^\s*[^=\s]*$/) {
+      @perlret = grep { index($_,$text)==0 } @XML::XSH::CompletionList::XSH_COMMANDS;
+    } else {
+      eval {
+	@perlret = map { s:\@$::; $_ } Term::ReadLine::GNU::XS::rl_filename_list($_[0]);
+      };
+    }
+
     # find longest common match. Can anybody show me how to peruse
     # T::R::Gnu to have this done automatically? Seems expensive.
     return () unless @perlret;

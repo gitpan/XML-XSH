@@ -1,3 +1,4 @@
+Artistic
 ChangeLog
 INSTALL
 LICENSE
@@ -9,14 +10,20 @@ lib/XML/XSH.pm
 lib/XML/XSH/Completion.pm
 lib/XML/XSH/CompletionList.pm
 lib/XML/XSH/Functions.pm
+lib/XML/XSH/GDOMECompat.pm
 lib/XML/XSH/Grammar.pm
 lib/XML/XSH/Help.pm
+lib/XML/XSH/LibXMLCompat.pm
 lib/XML/XSH/Parser.pm
 src/recdescent.dtd
 src/tests.xsh
 src/xsh_grammar.xml
 t/01basic.t
+t/02gdome.t
+test
 tools/gen_completions.pl
+tools/gen_doc.xsh
 tools/gen_grammar.pl
 tools/gen_help.pl
+tools/gen_reference.xsh
 xsh

@@ -6,13 +6,24 @@
 
 <!--                    Paragraph Content                          -->
 <!--                    Content allowed inside paragraphs          -->
-<!ENTITY % paracont    "#PCDATA | xref | link | typeref"             >
+<!ENTITY % paracont    "#PCDATA | xref | ulink | link | typeref 
+                        | emphasis | literal">
 
 
 <!--                    RecDescent                                 -->
 <!--                    RecDescent grammar and documentation
                         definition                                 -->
-<!ELEMENT  recdescent-xml (description?, preamb?, postamb?, rules+)  >
+<!ELEMENT  recdescent-xml (doc?, preamb?, postamb?, rules+)  >
+
+<!--                    documentation                              -->
+<!--                    Global documentation is stored here        -->
+<!ELEMENT  doc          (title?, shortdesc?, description?, section*) >
+
+<!--                    Section                                    -->
+<!ELEMENT  section      (title, (para | code | example)*, section*)  >
+<!--         id         section identifier                         -->
+<!ATTLIST  section
+             id         ID                                 #REQUIRED >
 
 <!--                    Preambule                                  -->
 <!--                    Code to be inserted before the grammar.    -->
@@ -31,17 +42,19 @@
 <!--                    Rule                                       -->
 <!--                    RecDescent grammar rule, its action and,
                         optionally, documentation                  -->
-<!ELEMENT  rule        (aliases?, production+, comment?, documentation?) >
+<!ELEMENT  rule        (aliases?, (production|ruleref)+, comment?, documentation?) >
 <!--         id         rule identificator
-             type       rule type (you may categorize your rules
+             type       rule type (you may categorize your rules)
              name       rule/command descriptive name             
              regexp     (optional) formal way to match the command
-                        name                                       -->
+             inline     if yes, do not create recdescent top-level
+                        rule                                       -->
 <!ATTLIST  rule                                                      
              id         ID                                 #REQUIRED
              type       CDATA                              #IMPLIED
              name       CDATA                              #IMPLIED
-             regexp     CDATA                              #IMPLIED  >
+             regexp     CDATA                              #IMPLIED
+             inline     (yes|no)                              'no'  >
 
 
 <!--                    Aliases                                    -->
@@ -59,8 +72,12 @@
 
 <!--                    Production                                 -->
 <!--                    The rule production                        -->
-<!ELEMENT  production   (selfref | group | regexp | directive | ruleref | literal | action)*    >
+<!ELEMENT  production   (selfref | group | regexp | directive | ruleref | string | lookahead | action)*    >
 
+<!--                    lookahead                                  -->
+<!ELEMENT  lookahead    EMPTY                                        >
+<!ATTLIST  lookahead
+             negative   (yes|no)                           'no'      >
 
 
 <!--                    RegExp                                     -->
@@ -82,13 +99,14 @@
 <!--                    Ruleref reference                          -->
 <!ELEMENT  ruleref      EMPTY                                        >
 <!--         rep        repetition suffix                          -->
+<!--         sepre      leftop separator regexp                    -->
 <!ATTLIST  ruleref
              ref        IDREF                              #REQUIRED
              rep        CDATA                              #IMPLIED  >
 
-<!--                    Literal                                    -->
-<!--                    Literal value                              -->
-<!ELEMENT  literal      (#PCDATA)                                    >
+<!--                    String                                    -->
+<!--                    String value                              -->
+<!ELEMENT  string      (#PCDATA)                                    >
 
 
 
@@ -102,7 +120,14 @@
 
 <!--                    Documentation                              -->
 <!--                    Rule documentation                         -->
-<!ELEMENT  documentation (title?, usage?, description?, see-also?)   >
+<!ELEMENT  documentation (title?, usage*, shortdesc?, 
+                          description?, see-also?)                   >
+
+<!--                    shortdesc                                  -->
+<!ELEMENT  shortdesc    (#PCDATA | xref | link | ulink | emphasis)*             >
+
+<!ATTLIST  documentation
+             sections   IDREFS                              #IMPLIED  >
 
 
 
@@ -127,12 +152,26 @@
 <!--                    A comment                                  -->
 <!ELEMENT  comment      (#PCDATA)                                    >
 
+<!--                    emphasis                                   -->
+<!--                    Emphasized text                            -->
+<!ELEMENT  emphasis     (#PCDATA)                                    >
+
+<!--                    literal                                    -->
+<!--                    Literal string                             -->
+<!ELEMENT  literal      (#PCDATA | xref | link | ulink)*             >
 
 <!--                    Xref                                       -->
 <!--                    Automatic cross-reference                  -->
 <!ELEMENT  xref         EMPTY                                        >
 <!ATTLIST  xref
              linkend    IDREF                              #REQUIRED >
+
+<!--                    URL Link                                   -->
+<!--                    External cross-reference                   -->
+<!ELEMENT  ulink        (#PCDATA)                                    >
+<!ATTLIST  ulink
+             url        CDATA                              #REQUIRED >
+
 
 <!--                    TypeRef                                    -->
 <!--                    Reference to all rules of a given type     -->
@@ -160,12 +199,19 @@
 <!--                    Group                                      -->
 <!--                    Group of alternative productions           -->
 <!ELEMENT  group        (production+)                                >
+<!--         sepre      leftop separator regexp                    -->
+<!ATTLIST  group
+             rep        CDATA                               #IMPLIED >
 
 
 <!--                    SelfRef                                    -->
 <!--                    Inserts a production item which is matched
                         by command name or any alias               -->
 <!ELEMENT  selfref      EMPTY                                        >
+<!--         sep        require whitespace to separate arguments   -->
+<!ATTLIST  selfref
+             sep        (yes|no)                           'yes'     >
+
 
 
 <!--                    Example                                    -->
@@ -174,7 +220,16 @@
 
 <!--                    Code                                       -->
 <!--                    A block of formatted programming code      -->
-<!ELEMENT  code         (#PCDATA)                                    >
+<!ELEMENT  code         (#PCDATA | tab | userinput)*                 >
+
+<!--                    indent                                     -->
+<!ELEMENT  tab          EMPTY                                        >
+<!ATTLIST  tab
+             count      CDATA                              "1"       >
+
+<!--                    userinput                                  -->
+<!ELEMENT  userinput    (#PCDATA)                                    >
+
 
 
 <!-- ============================================================= -->

@@ -1,4 +1,4 @@
-# $Id: Makefile.PL,v 1.5 2002/03/20 17:47:58 pajas Exp $
+# $Id: Makefile.PL,v 1.9 2002/09/02 15:37:54 pajas Exp $
 
 use strict;
 
@@ -11,10 +11,9 @@ WriteMakefile(
     'VERSION_FROM' => 'lib/XML/XSH/Functions.pm',
     'EXE_FILES' => ['xsh'],
     'PREREQ_PM' => {
-		    'XML::LibXML' => 1.31,
-		    'Text::Iconv' => 1.2,
+		    'XML::LibXML' => 1.52,
 		    'Parse::RecDescent' => 1.79,
-		    'XML::XUpdate::LibXML' => 0.2,
+		    'XML::XUpdate::LibXML' => 0.2.3,
 		   },
      AUTHOR       => 'Petr Pajas (pajas@matfyz.cz)',
      ABSTRACT     => 'XML Editing Shell',
@@ -33,6 +32,9 @@ xml:
 	tools/gen_help.pl src/xsh_grammar.xml > lib/XML/XSH/Help.pm
 	tools/gen_completions.pl src/xsh_grammar.xml > lib/XML/XSH/CompletionList.pm
 	cd lib/XML/XSH; perl -MGrammar -e XML::XSH::Grammar::compile
+
+docs:
+	./xsh < tools/gen_reference.xsh
 '
 }
 

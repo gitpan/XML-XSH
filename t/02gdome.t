@@ -54,9 +54,7 @@ map $_=uc //foo/text();
 
 unless count(//foo/text()[starts-with(.,'NO. 8')])=1 { eval die };
 
-map { $_=join "",reverse split "",$_; } //foo;
-
-count count(//oof)=10
+count count(//foo)=10
 
 if 1+1!=2 { eval die } else { unless (1+2!=3) { eval 1 } else { eval die } };
 
@@ -66,27 +64,23 @@ test-mode; eval die;
 
 run-mode;
 
-ls scratch://oof[not(@bar)] | cat 1>&2
+move scratch://foo[not(@bar)] into t://foo[@bar='1'];
 
-move scratch://oof[not(@bar)] into t://foo[@bar='1'];
+count scratch:count(/scratch/foo)=9;
 
-count scratch:count(/scratch/oof)=9;
+count t:count(/scratch/foo/foo)=1;
 
-ls t:/scratch/foo[@bar='1'] | cat 1>&2
+locate //foo | cat 1>&2
 
-count t:count(/scratch/foo/oof)=1;
-
-locate //oof | cat 1>&2
-
-cd t:/scratch/foo/oof/text()
+cd t:/scratch/foo/foo/text()
 
 pwd | cat 1>&2
 
-remove t://oof;
+remove t://foo/foo;
 
 pwd | cat 1>&2
 
-count t:count(/scratch/foo/oof)=0;
+count t:count(/scratch/foo/foo)=0;
 
 select scratch;
 
@@ -119,11 +113,7 @@ valid;
 
 validate;
 
-list | cat 1>&2
-
 xinsert element silly after //br
-
-list | cat 1>&2
 
 count count(//br[./following-sibling::silly])=2
 
@@ -138,35 +128,46 @@ close t
 
 ls / | cat 1>&2
 EOF
-
-  plan tests => 4+@xsh_test;
+  if (eval { require XML::GDOME; } ) {
+    plan tests => 5+@xsh_test;
+  } else {
+    plan tests => 1;
+    $no_gdome=1;
+  }
 }
-END { ok(0) unless $loaded; }
-use XML::XSH qw/&xsh &xsh_init &set_opt_q &xsh_set_output/;
-$XML::XSH::Functions::SIGSEGV_SAFE=1;
-$loaded=1;
-ok(1);
+END {
+  skip($no_gdome,$loaded);
+}
+unless ($no_gdome) {
+  require XML::XSH;
+  import XML::XSH qw/&xsh &xsh_init &set_opt_q &xsh_set_output/;
+  $XML::XSH::Functions::SIGSEGV_SAFE=1;
+  $XML::XSH::Functions::SIGSEGV_SAFE=1;
+  $loaded=1;
+  ok(1);
 
-($::RD_ERRORS,$::RD_WARN,$::RD_HINT)=(1,1,1);
+  ($::RD_ERRORS,$::RD_WARN,$::RD_HINT)=(1,1,1);
 
-$::RD_ERRORS = 1; # Make sure the parser dies when it encounters an error
-$::RD_WARN   = 1; # Enable warnings. This will warn on unused rules &c.
-$::RD_HINT   = 1; # Give out hints to help fix problems.
+  $::RD_ERRORS = 1; # Make sure the parser dies when it encounters an error
+  $::RD_WARN   = 1; # Enable warnings. This will warn on unused rules &c.
+  $::RD_HINT   = 1;		# Give out hints to help fix problems.
 
-xsh_set_output(\*STDERR);
-set_opt_q(0);
-xsh_init();
+  xsh_set_output(\*STDERR);
+  set_opt_q(0);
 
-print STDERR "\n";
-ok(1);
+  xsh_init("XML::XSH::GDOMECompat");
 
-print STDERR "\n";
-ok ( XML::XSH::Functions::create_doc("scratch","scratch") );
+  print STDERR "\n";
+  ok(1);
 
-print STDERR "\n";
-ok ( XML::XSH::Functions::set_local_xpath(['scratch','/']) );
+  print STDERR "\n";
+  ok ( XML::XSH::Functions::create_doc("scratch","scratch") );
 
-foreach (@xsh_test) {
-  print STDERR "\n\n[[ $_ ]]\n";
-  ok( xsh($_) );
+  print STDERR "\n";
+  ok ( XML::XSH::Functions::set_local_xpath(['scratch','/']) );
+
+  foreach (@xsh_test) {
+    print STDERR "\n\n[[ $_ ]]\n";
+    ok( xsh($_) );
+  }
 }

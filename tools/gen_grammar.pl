@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: gen_grammar.pl,v 1.3 2002/03/20 17:53:15 pajas Exp $
+# $Id: gen_grammar.pl,v 1.6 2002/09/02 15:47:54 pajas Exp $
 
 use strict;
 use XML::LibXML;
@@ -28,7 +28,7 @@ my ($postamb)=$dom->findnodes('./postamb');
 print "# This file was automatically generated from $ARGV[0] on \n# ",scalar(localtime),"\n";
 
 print get_text($preamb,1);
-foreach my $r ($rules->findnodes('./rule')) {
+foreach my $r ($rules->findnodes('./rule[@inline!="yes"]')) {
   print "\n  ",$r->getAttribute('id'),":\n\t   ";
   print join("\n\t  |",create_productions($r)),"\n";
 }
@@ -57,36 +57,55 @@ sub get_text {
   return $no_strip ? $text : strip_space($text);
 }
 
+sub find_rule {
+  my ($r)=@_;
+  return $r->findnodes('id("'.$r->getAttribute('ref').'")');
+}
+
 sub create_productions {
   my ($rule)=@_;
-  return map { create_rule_production($rule,$_) }
-    $rule->findnodes('./production');
+  return map {
+    $_->nodeName() eq 'production' ?
+      create_rule_production($rule,$_) : create_productions(find_rule($_))
+      }
+    $rule->findnodes('production|ruleref');
 }
 
 sub has_sibling {
   my ($node)=@_;
   return 0 unless $node;
-  $node=$node->nextSibling();
-  while ($node) {
-    return 1 if ($node->nodeType == XML_ELEMENT_NODE
-		 and
-		 $node->nodeName ne 'action'
-		 and
-		 $node->nodeName ne 'directive'
-		);
-    $node=$node->nextSibling();
-  }
-  return 0;
+  my$value=
+    $node->find(
+  '(following-sibling::*[name()!="action" and name()!="directive"]
+    or
+    not(following-sibling::*) and
+    (parent::production/parent::group/following-sibling::*[name()!="action"
+                                                           and name()!="directive"])
+   )');
+  return $value;
+#   $node=$node->nextSibling();
+#   while ($node) {
+#     return 1 if ($node->nodeType == XML_ELEMENT_NODE
+# 		 and
+# 		 $node->nodeName ne 'action'
+# 		 and
+# 		 $node->nodeName ne 'directive'
+# 		);
+#     $node=$node->nextSibling();
+#   }
+#   return 0;
 }
 
 sub create_rule_production {
   my ($rule,$prod)=@_;
-  my $result;
+   my $result;
   my $name;
   foreach my $item ($prod->childNodes()) {
     next unless $item->nodeType == XML_ELEMENT_NODE;
     $name=$item->nodeName();
-    if ($name eq 'regexp') {
+    if ($name eq 'lookahead') {
+      $result.=' ...' . ($item->getAttribute('negative') eq 'yes' ? '!' : '');
+    } elsif ($name eq 'regexp') {
       $result.=" /".get_text($item)."/";
     } elsif ($name eq 'directive') {
       my $text=get_text($item);
@@ -95,10 +114,10 @@ sub create_rule_production {
       $result.=">";
     } elsif ($name eq 'ruleref') {
       $result.=" ".$item->getAttribute('ref');
-      if ($item->getAttribute('rep') ne "") {
+      if ($item->getAttribute('rep') ne '') {
 	$result.="(".$item->getAttribute('rep').")";
       }
-    } elsif ($name eq 'literal') {
+    } elsif ($name eq 'string') {
       $result.=" '".get_text($item)."'";
     } elsif ($name eq 'action') {
       $result.="\n\t\t{ ".get_text($item,1)." }\n  \t";
@@ -107,15 +126,19 @@ sub create_rule_production {
       $result.="("
 	     . join("\n\t  |",create_productions($item))
              . "\n\t   )";
+      if ($item->getAttribute('rep') ne '') {
+	$result.="(".$item->getAttribute('rep').")";
+      }
     } elsif ($name eq 'selfref') {
       $result.=' /('
 	.join("|", map { $_->getAttribute('regexp') ne "" ?
 			   $_->getAttribute('regexp') :
 			   $_->getAttribute('name')
 		       }
-	      $rule,$rule->findnodes("./aliases/alias"))
+	      $rule->findnodes('ancestor-or-self::rule'),
+	      grep {defined($_)} $rule->findnodes("./aliases/alias"))
 	. ')'
-	. (has_sibling($item) ? '\s/' : '/');
+	. (($item->getAttribute('sep') ne 'no' and has_sibling($item)) ? '\s/' : '/');
     }
   }
 

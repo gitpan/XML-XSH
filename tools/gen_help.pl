@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: gen_help.pl,v 1.3 2002/03/14 17:32:06 pajas Exp $
+# $Id: gen_help.pl,v 1.6 2002/09/02 15:47:53 pajas Exp $
 
 use strict;
 use XML::LibXML;
@@ -28,7 +28,7 @@ my $ruledoc;
 my $title;
 my @aliases;
 my @seealso;
-my $usage;
+my @usage;
 my $desc;
 
 
@@ -44,11 +44,12 @@ PREAMB
 
 print "\$HELP=<<'END';\n";
 print "General notes:\n\n";
-($desc)=$dom->findnodes('./description');
+($desc)=$dom->findnodes('./doc/description');
 print_description($desc,"  ","  ") if ($desc);
 print "END\n\n";
 
 foreach my $r ($rules->findnodes('./rule')) {
+  next unless $r;
   my ($ruledoc)=$r->findnodes('./documentation');
   next unless $ruledoc;
   my $name=get_name($r);
@@ -57,23 +58,29 @@ foreach my $r ($rules->findnodes('./rule')) {
   ($title)=$ruledoc->findnodes('./title');
   print get_text($title),"\n\n" if ($title);
 
-  ($usage)=$ruledoc->findnodes('./usage');
-  if ($usage) {
-    print "usage:       ",get_text($usage),"\n\n";
+  @usage=$ruledoc->findnodes('./usage');
+  if (@usage) {
+    print "usage:       ";
+    foreach (@usage) {
+      my $usage=get_text($_);
+      $usage=~s/\s+/ /;
+      print $usage,"\n             ";
+    }
+    print "\n";
   }
-  @aliases=$r->findnodes('./aliases/alias');
+  @aliases=grep {defined($_)} $r->findnodes('./aliases/alias');
   if (@aliases) {
     print "aliases:     ",join " ",map { get_name($_) } @aliases;
     print "\n\n";
   }
   ($desc)=$ruledoc->findnodes('./description');
   if ($desc) {
-    print "description:";
-    print_description($desc," "," "x(13));
+    print "description:\n";
+    print_description($desc," "x(13)," "x(13));
   }
-  @seealso=$ruledoc->findnodes('./description/see-also/ruleref');
+  @seealso=grep {defined($_)} $ruledoc->findnodes('./description/see-also/ruleref');
   if (@seealso) {
-    print "see also:     ",join " ",
+    print "see also:     ",join " ", grep {defined($_)}
       map { get_name($_) } @seealso;
     print "\n\n";
   }
@@ -81,7 +88,7 @@ foreach my $r ($rules->findnodes('./rule')) {
   print "END\n\n";
 
   foreach (@aliases) {
-    print "\$HELP{'",get_name($_),"'}=\$HELP{$name};\n";
+    print "\$HELP{'",get_name($_),"'}=\$HELP{'$name'};\n";
   }
   print "\n";
 
@@ -128,8 +135,12 @@ sub get_text {
 	$text.=">";
       } elsif ($n->nodeName() eq 'typeref') {
 	foreach (split /\s/,$n->getAttribute('types')) {
-	  $text.=join ", ", sort map { get_name($_) } $node->findnodes("//rules/rule[\@type='$_']");
+	  $text.=join ", ", sort map { get_name($_) } grep {defined($_)} $node->findnodes("//rules/rule[\@type='$_']");
 	}
+      } elsif ($n->nodeName eq 'tab') {
+	$text.="\t" x $n->getAttribute('count');
+      } if ($n->nodeName() eq 'literal') {
+	$text.="`".get_text($n,1)."'";
       } else {
 	$text.=get_text($n);
       }

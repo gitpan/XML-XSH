@@ -1,5 +1,11 @@
 * support DTD modification
 * better support for namespaces
-* allow entity reference insertion
++ allow entity reference insertion
 * allow parameters for user defined functions
-* maybe perl-like while/foreach (not xpath)
+* split element
+* 'locate' - allow use also nearest id() 
++ external xinclude save support
+* untag/split element
+* comment-out node (?? uncomment ??)
+* fold/unfold command (fold/unfold elements for subsequent ls commands)
+* xsh-grammar: parse xslt parameters as XPATH instead of XSH expressions ??

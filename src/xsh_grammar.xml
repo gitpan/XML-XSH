@@ -1,48 +1,631 @@
-<?xml version='1.0'?>
+<?xml version="1.0"?>
 <!DOCTYPE recdescent-xml SYSTEM "recdescent.dtd">
 <recdescent-xml>
-  <description>
-    <para>
-      Commands must be separated with a semicolon, or with a pipeline
-      redirection. In the interactive shell, use slash in the end of
-      line to indicate that the command follows on next line.
-    </para>
-    <para>
-      Pipeline redirection may be used to redirect
-      command output into 1) any unix command or 2) XSH variable.
-      It consists of
-    </para>
-    <para>
-      1) a pipeline character `|' followed by any unix command and its
-         parameters (which are considered to span across the whole
-         rest of the line), or
-    </para>
-    <example>
-      <title>Count any attributes that contain string foo in its name or value.</title>
-      <code>xsh> list //words/attribute() | grep foo | wc</code>
-    </example>
-    <para>
-      2) of a pair of characters `|>' followed by an XSH variable name
-    </para>
-    <example>
-      <title>Store the number of all words in a variable named count.</title>
-      <code>xsh> count //words |> $count</code>
-    </example>
-    <para>
-      You may navigate in documents with `cd' command followed by an
-      XPath expression (much like in your filesystem).
-    </para>
-    <para>
-      Type `help command' to get a list of all XSH commands.
-    </para>
-    <para>
-      Type `help type' to get a list of all argument types.
-    </para>
-    <para>
-      Type help followed by a command or type name to get more
-      information on the particular command or argument type.
-    </para>
-  </description>
+  <doc>
+    <title>XSH</title>
+    <shortdesc>XML Editing Shell</shortdesc>
+    <description>
+      <para>
+	XSH acts as a command interpreter.  Individual commands must
+	be separated with a semicolon. Each command may be followed by
+	a pipeline redirection to capture the command's output. In the
+	interactive shell, backslash may be used at the end of line to
+	indicate that the command follows on the next line.
+      </para>
+      <para>
+	A pipeline redirections may be used either to feed the
+	command's output to a unix command or to store it in a XSH
+	string variable.</para> <para>In the first case, the syntax is
+	<literal>xsh-command | shell-command ;</literal> where
+	<literal>xsh-command</literal> is any XSH
+	command and <literal>shell-command</literal> is any command (or code) recognized
+	by the default shell interpreter of the operating system
+	(i.e. on UNIX systems by <literal>sh</literal> or
+	<literal>csh</literal>, on Windows systems by
+	<literal>cmd</literal>).  Brackets may be used to join more shell commands (may
+	depend on which shell is used).
+      </para>
+      <example>
+	<title>Count any attributes that contain string foo in its name or value.</title>
+	<code>xsh&gt; <userinput>list //words/attribute() | grep foo | wc</userinput></code>
+      </example>
+      <para>
+	In order to store a command's output in a string variable, the
+	pipeline redirection must take the form <literal>xsh-command
+	|&gt; $variable</literal> where <literal>xsh-command</literal> is
+	any XSH command and <literal>$variable</literal> is any valid
+	name for a string <link linkend="variables">variable</link>.
+      </para>
+      <example>
+	<title>Store the number of all words in a variable named count.</title>
+	<code>xsh&gt; <userinput>count //words |&gt; $count</userinput></code>
+      </example>
+      <para>
+	<literal><xref linkend="help_command"/> command</literal>
+	gives a list of all XSH commands.
+      </para>
+      <para>
+	<literal><xref linkend="help_command"/> type</literal> gives a
+	list of all argument types.
+      </para>
+      <para>
+	<literal><xref linkend="help_command"/></literal> followed by
+	a command or type name gives more information on the
+	particular command or argument type.
+      </para>
+    </description>
+    <section id="documents">
+      <title>Files/Documents</title>
+      <para>
+	XSH is intended to query and manipulate XML and HTML
+	documents. Use one of the
+	<literal>open/open-*/create</literal> commands to load an XML
+	or HTML document from a local file, external URL (such as
+	http:// or ftp://), string or pipe.  While loading, XSH parses
+	and optionally validates (see <xref linkend="validation"/> and
+	<xref linkend="load_ext_dtd"/>) the document. Parsed documents
+	are stored in memory as <ulink url="http://www.w3.org/DOM/">DOM</ulink> trees, that can be
+	<link linkend="navigation">navigated</link> and <link linkend="manipulation">manipulated</link> quite similarly as a
+	local filesystem.
+      </para>
+      <para>
+	Every opened document is associated with an identifier (<xref linkend="ID"/>), that is a symbolic name for the document in
+	  XSH and can be used for example as a prefix of <link linkend="xpath">XPath expressions</link>.
+      </para>
+      <para>
+	In the current version, XSH is only able to save documents
+	locally.  To store a document on any other location, use <xref linkend="list_command"/> command and pipe redirection to feed
+	the XML representation of the document to any external program
+	that is able to store it on a remote location.
+      </para>
+      <example>
+	<title>Store XSH document DOC on a remote machine using Secure Shell</title>
+	<code>xsh&gt; <userinput>list DOC:/ | ssh my.remote.org 'cat &gt; test.xml'</userinput></code>
+      </example>
+    </section>
+    <section id="navigation">
+      <title>Tree navigation</title>
+      <para>
+	With XSH, it is possible to browse <link
+	linkend="documents">document trees</link> as if they were a
+	local filesystem, except that <link
+	linkend="xpath">XPath</link> expressions are used instead of
+	ordinary UNIX paths.</para> <para>Current position in the
+	document tree is called the <emphasis>current node</emphasis>.
+	Current node's XPath may be queried with <xref
+	linkend="pwd_command"/> command.  In the interactive shell,
+	current node is also displayed in the command line
+	prompt. Remember, that beside <xref
+	linkend="chxpath_command"/> command, current node (and
+	document) is silently changed by all variant of <xref
+	linkend="open_command"/> command, <xref
+	linkend="create_command"/> command and temporarily also by the
+	node-list variant of the <xref linkend="foreach_command"/>
+	statement.
+      </para>
+      <para>Documents are specified
+	in a similar way as harddrives on DOS/Windows(TM) systems
+	(except that their names are not limitted to one letter in
+	XSH), i.e. by a prefix of the form doc: where doc is the
+	<xref linkend="ID"/> associated with the document.
+      </para>
+      <para>
+	To mimic the filesystem navigation as closely as
+	possible, XSH contains several commands named by analogy of
+	UNIX filesystem commands, such as <xref linkend="chxpath_command"/>, <xref linkend="list_command"/> and
+	<xref linkend="pwd_command"/>.	
+      </para>
+      <example>
+	<code>xsh scratch:/&gt; <userinput>open docA=&quot;testA.xml&quot;</userinput>
+	  xsh docB:/&gt; <userinput>open docB=&quot;testB.xml&quot;</userinput>
+	  xsh&gt; <userinput>pwd</userinput>
+	  docB:/
+	  xsh docB:/&gt; <userinput>cd docA:/article/chapter[title='Conclusion']</userinput>
+	  xsh docA:/article/chapter[5]&gt; <userinput>pwd</userinput>
+	  docA:/article/chapter[5]
+	  xsh docA:/article/chapter[5]&gt; <userinput>cd previous-sibling::chapter</userinput>
+	  xsh docA:/article/chapter[4]&gt; <userinput>cd ..</userinput>
+	  xsh docA:/article&gt; <userinput>select docB</userinput>
+	  xsh docB:/&gt;
+	</code>
+      </example>
+    </section>
+    <section id="manipulation">
+      <title>Tree modification</title>
+      <para>
+	XSH provides mechanisms not only to browse and inspect the DOM
+	tree but also to modify its content by providing commands for
+	copying, moving, deleting its nodes or add new nodes or
+	XML fragments to it. It is quite easy to learn these commands
+	since their names or aliases mimic their usual filesystem analogies.
+	However, many of these commands have two versions one of which
+	is prefixed with a letter &quot;x&quot;. This &quot;x&quot; stands for &quot;cross&quot;,
+	thus e.g. <xref linkend="xcopy_command"/> should be read as
+	&quot;cross copy&quot;. Let's explain the difference on this example.</para>
+      <para>
+	When you copy, you have to specify what are you copying and
+	where are you copying to, so you have to specify the
+	<emphasis>source</emphasis> and the
+	<emphasis>target</emphasis>.  XSH is very much XPath-based so,
+	XPath is used here to specify both of them. However, there
+	might be more than one node that satisfies a given XPath expression. So,
+	the rule of thumb is that the &quot;cross&quot; variant of a
+	command places <emphasis>one and every</emphasis> of the source nodes
+	to the location of <emphasis>one and every</emphasis> destination
+	node, while the plain variant works one-by-one, placing the
+	first source node to the first destination, the second source
+	node to the second destination, and so on (as long as there
+	are some source nodes and free destinations left).
+      </para>
+      <example>
+	<code>xsh&gt; <userinput>create a &quot;&lt;X&gt;&lt;A/&gt;&lt;Y/&gt;&lt;A/&gt;&lt;/X&gt;&quot;;</userinput>
+	  xsh&gt; <userinput>create b &quot;&lt;X&gt;&lt;B/&gt;&lt;C/&gt;&lt;B/&gt;&lt;C/&gt;&lt;B/&gt;&lt;/X&gt;&quot;;</userinput>
+	  xsh&gt; <userinput>xcopy a://A replace b://B;</userinput>
+	  xsh&gt; <userinput>copy b://C before a://A;</userinput>
+	  xsh&gt; <userinput>ls a:/;</userinput>
+	  &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+	  &lt;X&gt;&lt;C/&gt;&lt;A/&gt;&lt;Y/&gt;&lt;C/&gt;&lt;A/&gt;&lt;/X&gt;
+
+	  xsh&gt; <userinput>ls b:/;</userinput>
+	  &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+	  &lt;X&gt;&lt;A/&gt;&lt;A/&gt;&lt;C/&gt;&lt;A/&gt;&lt;A/&gt;&lt;C/&gt;&lt;A/&gt;&lt;A/&gt;&lt;/X&gt;
+	</code>
+      </example>
+      <para>
+	As already indicated by the example, another issue of tree
+	modification is the way in which the destination node
+	determines the target location. Should the source node be
+	placed before, after, or into the resulting node? Should it
+	replace it completely? This information has to be given in the
+	<xref linkend="loc"/> argument that usually precedes the
+	destination XPath.
+      </para>
+      <para>
+	Finally, what happens if source and destination nodes are of
+	incompatible types? XSH tries to avoid this by implicitly
+	converting between node types when necessary.  For example, if
+	a text, comment, and attribute node is copied into, before or
+	after an attribute node, the original attribute value of the
+	attribute is replaced, prepended or appended respectively with
+	the textual content of the source node. Note however, that
+	<emphasis>element nodes are never converted</emphasis> into
+	text, attribute or any other textual node.  There
+	are many combinations here, so try yourself and see the
+	results.
+      </para>
+      <para>You may even use some more sofisticated way to convert
+	between node types, as shown in the following example, where
+	an element is first commented out and than again uncommented.
+	Note, that the particular approach used for resurrecting the
+	commented XML material works only for well-balanced chunks of
+	XML.
+      </para>
+      <example>
+	<title>Using string variables to convert between different
+	  types of nodes</title>
+	<code>
+	  xsh&gt; <userinput>create doc &quot;&lt;?xml version='1.0'?&gt;
+&lt;book&gt;
+  &lt;chapter&gt;
+    &lt;title&gt;Intro&lt;/title&gt;
+  &lt;/chapter&gt;
+  &lt;chapter&gt;
+    &lt;title&gt;Rest&lt;/title&gt;
+  &lt;/chapter&gt;
+&lt;/book&gt;&quot;;</userinput>
+
+	  # comment out the first chapter
+	  xsh&gt; <userinput>ls //chapter[1] |&gt; $chapter_xml;</userinput>
+	  xsh&gt; <userinput>add comment $chapter_xml replace //chapter[1];</userinput>
+
+# show the result
+	  xsh&gt; <userinput>ls / 0;</userinput>
+&lt;?xml version=&quot;1.0&quot;?&gt;
+&lt;book&gt;
+  &lt;!--&lt;chapter&gt;
+    &lt;title&gt;Intro&lt;/title&gt;
+  &lt;/chapter&gt;
+--&gt;
+  &lt;chapter&gt;
+    &lt;title&gt;Rest&lt;/title&gt;
+  &lt;/chapter&gt;
+&lt;/book&gt;
+
+
+# un-comment the chapter
+	  xsh&gt; <userinput>$comment = string(//comment()[1]);</userinput>
+	  xsh&gt; <userinput>add chunk $comment replace //comment()[1];</userinput>
+
+# show the result
+	  xsh&gt; <userinput>ls / 0;</userinput>
+&lt;?xml version=&quot;1.0&quot;?&gt;
+&lt;book&gt;
+  &lt;chapter&gt;
+    &lt;title&gt;Intro&lt;/title&gt;
+  &lt;/chapter&gt;
+
+  &lt;chapter&gt;
+    &lt;title&gt;Rest&lt;/title&gt;
+  &lt;/chapter&gt;
+&lt;/book&gt;
+	</code>
+      </example>
+    </section>
+    <section id="flow">
+      <title>Flow control</title>
+      <para>
+	What a scripting language XSH would be had it not some kind of
+	conditional statements, loops and other stuff that
+	influences the way in which XSH commands are processed.
+      </para>
+      <para>
+	Most notable XSH's feature in this area is that some of the
+	basic flow control statements, namely <xref linkend="if"/>,
+	<xref linkend="unless"/>, <xref linkend="while"/> and <xref linkend="foreach_command"/> have two variants, an XPath-based
+	one and a Perl-based one.  The XPath-based variant uses <xref linkend="xpath"/> expressions to specify the condition or
+	node-lists to iterate, while the other one utilizes <xref linkend="perl_code"/> for this purpose. See 
+	descriptions of the individual statements for more detail.
+      </para>
+    </section>
+    <section id="information">
+      <title>Retrieving more information</title>
+      <para> Beside the possibility to browse the DOM tree and
+	list some parts of it (as described in <xref linkend="navigation"/>), XSH provides commands to obtain other
+	information related to open documents as well as the XSH
+	interpreter itself. These commands are listed bellow.
+      </para>
+    </section>
+    <section id="argtypes">
+      <title>Argument Types</title>
+      <para>
+	XSH commands accept different types of arguments, such as
+	usual strings (<xref linkend="expression"/>) or
+	<link linkend="xpath">XPath expressions</link>. 
+	Notably, these two types and types based on them
+	support string variable interpolation. See documentation
+	of the individual types for more information.
+      </para>
+    </section>
+    <section id="variables">
+      <title>Variables</title>
+      <para>
+	In the current version, XSH supports two types of variables:
+	string (scalar) variables and node-list variables.  Perl
+	programmers that might miss some other kinds of variables
+	(arrays or hashes) may use the support for <link linkend="binding">interacting
+	with Perl</link> to access these types (see some examples below).
+      </para>
+      <para>
+	These two kinds of variables differ syntactically in the
+	prefix: string variables are prefixed with a dollar sign
+	(<literal>$</literal>) while node-list variables are prefixed
+	with a percent sign (<literal>%</literal>).
+      </para>
+      <section id="string_variables">
+	<title>String Variables</title>
+	<para>
+	  Every string variable name consists of a dollar sign
+	  (<literal>$</literal>) prefix and an <xref linkend="ID"/>,
+	  that has to be unique among other scalar variables, e.g.
+	  <literal>$variable</literal>.  Values are
+	  assigned to variables either by simple <link
+	  linkend="assign_command">assignments</link> of the form
+	  <literal>$variable = <xref linkend="xpath"/></literal> or by
+	  capturing the output of some command with a variable
+	  redirection of the form <literal>command |&gt;
+	  $variable</literal>.
+	</para>
+	<para>
+	  String variables may be used in <link
+	  linkend="expression">string expressions</link>, <link
+	  linkend="xpath">XPath expressions</link>, or even in
+	  perl-code as $<xref linkend="ID"/> or ${<xref
+	  linkend="ID"/>}. In the first two cases, variables act as
+	  macros in the sense that all variables occurences are
+	  replaced by the corresponding values before the expression
+	  itself is evaluated.
+	</para>
+	<para>
+	  To display current value of a variable, use the 
+	  <xref linkend="print_command"/> command,
+	  <xref linkend="var_command"/> command or
+	  simply the variable name:
+	</para>
+	<example>
+	  <code>xsh> <userinput>$b="chapter";</userinput>
+	    xsh> <userinput>$file="${b}s.xml";</userinput>
+	    xsh> <userinput>open f=$file;</userinput>
+	    xsh> <userinput>ls //$b[count(descendant::para)>10]</userinput>
+	    xsh> <userinput>print $b</userinput>
+	    chapter
+	    xsh> <userinput>$b</userinput>
+	    $b='chapter';
+	    xsh> <userinput>variables</userinput>
+	    $a='chapters.xml';
+	    $b='chapter';
+	  </code>
+	</example>
+      </section>
+      <section id="nodelist_variables">
+	<title>Node-list Variables</title>
+	<para>
+	  Every string variable name consists of a percent sign
+	  (<literal>%</literal>) prefix and an <xref linkend="ID"/>,
+	  that has to be unique among other node-list variables, e.g.
+	  <literal>%variable</literal>.
+	</para>
+	<para>
+	  Node-list variables can be used to store lists of nodes that
+	  result from evaluating an XPath. This is especially useful
+	  when several changes are performed on some set of nodes and
+	  evaluating the XPath expression repeatedly would take too
+	  long. Other important use is to remember a node that would
+	  otherwise be extremely hard or even impossible to locate by
+	  XPath expressions after some changes to the tree structure
+	  are made, since such an XPath cannot be predicted in
+	  advance.
+	</para>
+	<para>
+	  Although node-list variables act just like XPath expressions
+	  that would result in the same node-list, for implementation
+	  reasons it is not possible to use node-list variables as
+	  parts of complex XPath expressions except for one case. They
+	  <emphasis>may be only used at the very beginning of an XPath
+	  expression</emphasis>. So while constructions such as
+
+	  <literal>%creatures[4]</literal>,
+	  <literal>%creatures[@race='elf']</literal>, or
+	  <literal>%creatures/parents/father</literal> <emphasis>do
+	  work</emphasis> as expected,
+	  <literal>string(%creatures[2]/@name)</literal>
+	  <literal>//creature[%creatures[2]/@name=@name]</literal>, or
+	  <literal>%creatures[@race='elf'][2]</literal> <emphasis>do
+	  not</emphasis>.  In the first two cases it is because
+	  node-list variables cannot be evaluated in the middle of an
+	  XPath expression. The third case fails because this
+	  construction actually translates into a sequence of
+	  evaluations of <literal>self::*[@race='elf'][2]</literal>
+	  for each node in the <literal>%creatures</literal>
+	  node-list, which is not equivallent to the intended
+	  expression as the <literal>[2]</literal> filter does not
+	  apply to the whole result of
+	  <literal>%creatures[@race='elf']</literal> at once but
+	  rather to the partial results.</para> <para>Fortunatelly, it
+	  is usually possible to work around these unsupported
+	  constructions quite easily.  This is typically done by
+	  introducing some more variables as well as using the <xref
+	  linkend="foreach_command"/> statement.  The following
+	  example should provide some idea on how to do this:
+	</para>
+	<example>
+	  <code># work around for $name=string(%creatures[2]/@name)
+	    xsh> <userinput>foreach %creatures[2] $name=string(@name)</userinput>
+	    # work around for ls //creature[%creatures[2]/@name=@name]
+	    xsh> <userinput>ls //creature[$name=@name]</userinput>
+	    # work around for ls %creatures[@race='elf'][2]
+	    xsh> <userinput>%elves = %creatures[@race='elf']</userinput>
+	    xsh> <userinput>ls %elves[2]</userinput>
+	  </code>
+	</example>
+	<para>
+	  Remember, that when a node is deleted from a tree it is at
+	  the same time removed from all node-lists it occurs in.
+	  Note also, that unlike string variables, node-list variables
+	  can not be (and are not intended to be) directly accessed
+	  from Perl code.
+	</para>
+      </section>
+      <section id="other_types">
+	<title>Accessing Perl Variables</title>
+	<para>
+	  All XSH string variables are usual Perl scalar variables
+	  from the <literal>XML::XSH::Map</literal> namespace, which
+	  is the default namespace for any Perl code evaluated from
+	  XSH. Thus it is possible to arbitrarily intermix XSH and
+	  Perl assignments:
+	</para>
+	<example>
+	  <code>
+	    xsh> <userinput>ls //chapter[1]/title</userinput>
+	    &lt;title>Introduction&lt;/title>
+	    xsh> <userinput>$a=string(//chapter[1]/title)</userinput>
+	    xsh> <userinput>eval { $b="CHAPTER 1: ".uc($a); }</userinput>
+	    xsh> <userinput>print $b</userinput>
+	    CHAPTER 1: INTRODUCTION
+	  </code>
+	</example>
+	<para>
+	  If needed, it is, however, possible to use any other type of Perl
+	  variables by means of evaluating a corresponding
+	  perl code. The following example demonstrates using Perl
+	  hashes to collect and print some simple racial statistics
+	  about the population of Middle-Earth:
+	</para>
+	<example>
+	  <code>
+	    foreach a:/middle-earth/creature { 
+  	    <tab/>$race=string(@race);
+	    <tab/>eval { $races{$race}++ };
+	    }
+	    print "Middle-Earth Population (race/number of creatures)"
+	    eval { 
+	    <tab/>echo map "$_/$races{$_}\n",
+	    <tab count="2"/>sort ($a cmp $b), keys(%races); 
+	    };
+	  </code>
+	</example>
+      </section>
+    </section>
+    <section id="configuration">
+      <title>Options</title> <para>The following commands are used to
+	modify the default behaviour of the XML parser or XSH itself.
+	Some of the commands are switch between two different modes
+	according to a given expression (which is expected to result
+	either in zero or non-zero value). Other commands also working
+	as a flip-flop have their own explicit counterpart (e.g.
+	<xref linkend="verbose"/> and <xref linkend="quiet"/> or <xref linkend="debug"/> and <xref linkend="nodebug"/>).  This
+	misconsistency is due to historical reasons.
+      </para>
+      <para>
+	The <xref linkend="encoding"/> and <xref linkend="query_encoding"/> options allow to specify character
+	encoding that should be expected from user as well as the
+	encoding to be used by XSH on output. This is particularly
+	useful when you work with UTF-8 encoded documents on a console
+	which supports only 8-bit characters.
+      </para>
+      <para>
+	The <xref linkend="options_command"/> command
+	displays current settings by means of XSH commands.
+	Thus it can not only be used to review current values, but
+	also to store them future use, e.g. in ~/.xshrc file.
+      </para>
+      <example>
+	<code>xsh&gt; <userinput>options &gt; cat &gt; ~/.xshrc</userinput></code>
+      </example>
+    </section>
+    <section id="binding">
+      <title>Interacting with Perl and Shell</title>
+      <para>
+	To allow more complex tasks to be achieved, XSH provides ways
+	for interaction with the Perl programming language and the
+	system shell.
+      </para>
+      <section id="binding_perl">
+	<title>Calling Perl</title>
+	<para>
+	  Perl is a language optimized for scanning arbitrary text
+	  files, extracting information from those text files, and
+	  printing reports based on that information.  It's also a
+	  good language for many system management tasks.  The
+	  language is intended to be practical (easy to use,
+	  efficient, and complete). XSH itself is written in Perl,
+	  so it is extremely easy to support this language as an
+	  extension to XSH.
+	</para>
+	<para>
+	  Perl <link linkend="perl_code">expressions or blocks of
+	  code</link> can either be simply evaluated with the <xref
+	  linkend="eval_command"/> command, used to do quick changes
+	  to nodes of the DOM tree (see <xref linkend="map_command"/>
+	  command), used to provide list of strings to iterate over in
+	  a <xref linkend="foreach_command"/> loop or to specify more
+	  complex conditions for <xref linkend="if"/>, <xref
+	  linkend="unless"/>, and <xref linkend="while"/> statements.
+	</para>
+	<para>
+	  To prevent conflict between XSH internals and the evaluated
+	  perl code, XSH runs such code in the context of a special
+	  namespace <literal>XML::XSH::Map</literal>. As described in
+	  the section <xref linkend="variables"/>, XSH string
+	  variables may be accessed and possibly assigned from Perl
+	  code in the most obvious way, since they actually
+	  <emphasis>are</emphasis> Perl variables defined in the
+	  <literal>XML::XSH::Map</literal> namespace.</para>
+	<para>
+	  The interaction between XSH and Perl actually works also the
+	  other way round, so that you may call back XSH from the
+	  evaluated Perl code.  For this, Perl function
+	  <literal>xsh</literal> is defined in the
+	  <literal>XML::XSH::Map</literal> namespace.  All parameters
+	  passed to this function are interpreted as XSH commands. To
+	  simplify evaluation of XPath expressions another function
+	  called <literal>count</literal> is defined.  It returns the
+	  same value as would be printed by <xref
+	  linkend="count_command"/> command in XSH on the same
+	  expression.
+	</para>
+	<para>
+	  In the following examples we use Perl to populate the
+	  Middle-Earth with Hobbits whose names are read from a text
+	  file called <literal>hobbits.txt</literal> (unless there are
+	  some Hobbits already there).
+	</para>
+	<example>
+	  <title>Use Perl to read text files</title>
+	  <code>
+	    unless (//creature[@race='hobbit']) {
+	    <tab/>perl 'open $file, "hobbits.txt"';
+	    <tab/>perl '@hobbits=&lt;$file>';
+	    <tab/>perl 'close $file';
+	    <tab/>foreach { @hobbits } {
+	    <tab count="2"/>insert element "&lt;creature name='$__' race='hobbit'>"
+	    <tab count="3"/>into m:/middle-earth/creatures;
+	    <tab/>}
+	    }
+	  </code>
+	</example>
+	<example>
+	  <title>The same code as a single Perl block</title>
+	  <code>perl {
+	    <tab/>unless (count(//creature[@race='hobbit'])) {
+	    <tab count="2"/>open my $file, "hobbits.txt";
+	    <tab count="2"/>foreach (&lt;$file>) {
+	    <tab count="3"/>xsh(qq{insert element "&lt;creature name='$_' race='hobbit'>"
+	    <tab count="4"/>into m:/middle-earth/creatures});
+	    <tab count="2"/>}
+	    <tab count="2"/>close $file;
+	    <tab/>}
+	    };</code>
+	</example>
+      </section>
+      <section id="binding_shell">
+	<title>Calling the System Shell</title>
+	<para>
+	  In the interactive mode, XSH interprets all lines starting
+	  with a exclamation mark (<literal>!</literal>) as shell
+	  commands and invokes the system shell to interpret them
+	  (this is to mimic FTP command-line interpreters).
+	</para>
+	<example>
+	  <code>xsh> <userinput>!ls -l</userinput>
+-rw-rw-r--    1 pajas    pajas        6355 Mar 14 17:08 Artistic
+drwxrwxr-x    2 pajas    users         128 Sep  1 10:09 CVS
+-rw-r--r--    1 pajas    pajas       14859 Aug 26 15:19 ChangeLog
+-rw-r--r--    1 pajas    pajas        2220 Mar 14 17:03 INSTALL
+-rw-r--r--    1 pajas    pajas       18009 Jul 15 17:35 LICENSE
+-rw-rw-r--    1 pajas    pajas         417 May  9 15:16 MANIFEST
+-rw-rw-r--    1 pajas    pajas         126 May  9 15:16 MANIFEST.SKIP
+-rw-r--r--    1 pajas    pajas       20424 Sep  1 11:04 Makefile
+-rw-r--r--    1 pajas    pajas         914 Aug 26 14:32 Makefile.PL
+-rw-r--r--    1 pajas    pajas        1910 Mar 14 17:17 README
+-rw-r--r--    1 pajas    pajas         438 Aug 27 13:51 TODO
+drwxrwxr-x    5 pajas    users         120 Jun 15 10:35 blib
+drwxrwxr-x    3 pajas    users        1160 Sep  1 10:09 examples
+drwxrwxr-x    4 pajas    users          96 Jun 15 10:35 lib
+-rw-rw-r--    1 pajas    pajas           0 Sep  1 16:23 pm_to_blib
+drwxrwxr-x    4 pajas    users         584 Sep  1 21:18 src
+drwxrwxr-x    3 pajas    users         136 Sep  1 10:09 t
+-rw-rw-r--    1 pajas    pajas          50 Jun 16 00:06 test
+drwxrwxr-x    3 pajas    users         496 Sep  1 20:18 tools
+-rwxr-xr-x    1 pajas    pajas        5104 Aug 30 17:08 xsh</code>
+	</example>
+	<para>
+	  To invoke a system shell command or program
+	  from the non-interactive mode or from a complex
+	  XSH construction, use the <xref linkend="exec_command"/>
+	  command.
+	</para>
+	<para>
+	  Since UNIX shell commands are very powerful tool for
+	  processing textual data, XSH supports direct redirection of
+	  XSH commands output to system shell command.  This is very
+	  similarly to the redirection known from UNIX shells, except
+	  that here, of course, the first command in the pipe-line
+	  colone is an XSH command. Since semicolon (<literal>;</literal>)
+	  is used in XSH to separate commands, it has to be prefixed
+	  with a backslash if it should be used for other purposes.
+	</para>
+	<example>
+	  <title>Use grep and less to display context of `funny'</title>
+	  <code>xsh> ls //chapter[5]/para | grep funny | less</code>
+	</example>
+	<example>
+	  <title>The same on Windows 2000/XP systems</title>
+	  <code>xsh> ls //chapter[5]/para | find "funny" | more</code>
+	</example>
+      </section>
+    </section>
+  </doc>
   <preamb>
 <![CDATA[
 package XML::XSH::Grammar;
@@ -73,61 +656,80 @@ sub new {
   </postamb>
   <rules>
     <!-- ================== commands and options ====================== -->
-    <rule id="command">
-      <production>
-	<group>
-	  <production><ruleref ref="option"/></production>
-	  <production><ruleref ref="copy_command"/></production>
-	  <production><ruleref ref="xcopy_command"/></production>
-	  <production><ruleref ref="move_command"/></production>
-	  <production><ruleref ref="xmove_command"/></production>
-	  <production><ruleref ref="list_command"/></production>
-	  <production><ruleref ref="exit_command"/></production>
-	  <production><ruleref ref="prune_command"/></production>
-	  <production><ruleref ref="map_command"/></production>
-	  <production><ruleref ref="close_command"/></production>
-	  <production><ruleref ref="open_command"/></production>
-	  <production><ruleref ref="openhtml_command"/></production>
-	  <production><ruleref ref="openpipe_command"/></production>
-	  <production><ruleref ref="validate_command"/></production>
-	  <production><ruleref ref="valid_command"/></production>
-	  <production><ruleref ref="list_dtd_command"/></production>
-	  <production><ruleref ref="print_enc_command"/></production>
-	  <production><ruleref ref="cd_command"/></production>
-	  <production><ruleref ref="clone_command"/></production>
-	  <production><ruleref ref="count_command"/></production>
-	  <production><ruleref ref="eval_command"/></production>
-	  <production><ruleref ref="saveas_command"/></production>
-	  <production><ruleref ref="savehtml_command"/></production>
-	  <production><ruleref ref="save_command"/></production>
-	  <production><ruleref ref="files_command"/></production>
-	  <production><ruleref ref="xslt_command"/></production>
-	  <production><ruleref ref="insert_command"/></production>
-	  <production><ruleref ref="xinsert_command"/></production>
-	  <production><ruleref ref="help_command"/></production>
-	  <production><ruleref ref="exec_command"/></production>
-	  <production><ruleref ref="call_command"/></production>
-	  <production><ruleref ref="include_command"/></production>
-	  <production><ruleref ref="assign_command"/></production>
-	  <production><ruleref ref="print_var_command"/></production>
-	  <production><ruleref ref="var_command"/></production>
-	  <production><ruleref ref="print_command"/></production>
-	  <production><ruleref ref="create_command"/></production>
-	  <production><ruleref ref="list_defs_command"/></production>
-	  <production><ruleref ref="select_command"/></production>
-	  <production><ruleref ref="if"/></production>
-	  <production><ruleref ref="unless"/></production>
-	  <production><ruleref ref="while"/></production>
-	  <production><ruleref ref="foreach"/></production>
-	  <production><ruleref ref="def"/></production>
-	  <production><ruleref ref="process_xinclude_command"/></production>    	
-	  <production><ruleref ref="chxpath_command"/></production>
-	  <production><ruleref ref="pwd_command"/></production>
-	  <production><ruleref ref="locate_command"/></production>
-	  <production><ruleref ref="xupdate_command"/></production>
-	</group>
-	<action>[$item[1]]</action>
-      </production>
+    <rule id="command" type="list">
+      <ruleref ref="backups"/>
+      <ruleref ref="nobackups"/>
+      <ruleref ref="quiet"/>
+      <ruleref ref="verbose"/>
+      <ruleref ref="test_mode"/>
+      <ruleref ref="run_mode"/>
+      <ruleref ref="debug"/>
+      <ruleref ref="nodebug"/>
+      <ruleref ref="version"/>
+      <ruleref ref="validation"/>
+      <ruleref ref="recovering"/>
+      <ruleref ref="parser_expands_entities"/>
+      <ruleref ref="keep_blanks"/>
+      <ruleref ref="pedantic_parser"/>
+      <ruleref ref="complete_attributes"/>
+      <ruleref ref="indent"/>
+      <ruleref ref="parser_expands_xinclude"/>
+      <ruleref ref="load_ext_dtd"/>
+      <ruleref ref="encoding"/>
+      <ruleref ref="query_encoding"/>
+      <ruleref ref="options_command"/>
+      <ruleref ref="copy_command"/>
+      <ruleref ref="xcopy_command"/>
+      <ruleref ref="move_command"/>
+      <ruleref ref="xmove_command"/>
+      <ruleref ref="list_command"/>
+      <ruleref ref="exit_command"/>
+      <ruleref ref="prune_command"/>
+      <ruleref ref="map_command"/>
+      <ruleref ref="sort_command"/>
+      <ruleref ref="close_command"/>
+      <ruleref ref="openhtml_command"/>
+      <ruleref ref="openpipe_command"/>
+      <ruleref ref="validate_command"/>
+      <ruleref ref="valid_command"/>
+      <ruleref ref="list_dtd_command"/>
+      <ruleref ref="print_enc_command"/>
+      <ruleref ref="cd_command"/>
+      <ruleref ref="clone_command"/>
+      <ruleref ref="count_command"/>
+      <ruleref ref="eval_command"/>
+      <ruleref ref="saveas_command"/>
+      <ruleref ref="savexinclude_command"/>
+      <ruleref ref="savehtml_command"/>
+      <ruleref ref="save_command"/>
+      <ruleref ref="files_command"/>
+      <ruleref ref="xslt_command"/>
+      <ruleref ref="insert_command"/>
+      <ruleref ref="xinsert_command"/>
+      <ruleref ref="help_command"/>
+      <ruleref ref="exec_command"/>
+      <ruleref ref="call_command"/>
+      <ruleref ref="include_command"/>
+      <ruleref ref="assign_command"/>
+      <ruleref ref="print_var_command"/>
+      <ruleref ref="var_command"/>
+      <ruleref ref="print_command"/>
+      <ruleref ref="create_command"/>
+      <ruleref ref="list_defs_command"/>
+      <ruleref ref="select_command"/>
+      <ruleref ref="if_command"/>
+      <ruleref ref="unless_command"/>
+      <ruleref ref="while_command"/>
+      <ruleref ref="foreach_command"/>
+      <ruleref ref="def"/>
+      <ruleref ref="process_xinclude_command"/>    	
+      <ruleref ref="chxpath_command"/>
+      <ruleref ref="pwd_command"/>
+      <ruleref ref="locate_command"/>
+      <ruleref ref="xupdate_command"/>
+      <ruleref ref="open_command"/>
+      <ruleref ref="fold_command"/>
+      <ruleref ref="unfold_command"/>
       <documentation>
 	<title>List of XSH commands</title>
 	<description>
@@ -135,28 +737,93 @@ sub new {
 	</description>
       </documentation>
     </rule>
-    <rule id="option">
-      <production><ruleref ref="quiet"/></production>
-      <production><ruleref ref="verbose"/></production>
-      <production><ruleref ref="test_mode"/></production>
-      <production><ruleref ref="run_mode"/></production>
-      <production><ruleref ref="debug"/></production>
-      <production><ruleref ref="nodebug"/></production>
-      <production><ruleref ref="version"/></production>
-      <production><ruleref ref="validation"/></production>
-      <production><ruleref ref="parser_expands_entities"/></production>
-      <production><ruleref ref="keep_blanks"/></production>
-      <production><ruleref ref="pedantic_parser"/></production>
-      <production><ruleref ref="complete_attributes"/></production>
-      <production><ruleref ref="indent"/></production>
-      <production><ruleref ref="parser_expands_xinclude"/></production>
-      <production><ruleref ref="load_ext_dtd"/></production>
-      <production><ruleref ref="encoding"/></production>
-      <production><ruleref ref="query_encoding"/></production>
-    </rule>    
+
+    <rule id="statement">
+      <production>
+	<group>
+	  <production><ruleref ref="if"/></production>
+	  <production><ruleref ref="unless"/></production>
+	  <production><ruleref ref="while"/></production>
+	  <production><ruleref ref="foreach"/></production>
+	  <production><ruleref ref="def"/></production>
+	</group>
+	<action>$item[1]</action>
+      </production>
+      <production><directive type="error"/></production>
+    </rule>
+
+    <rule id="complex_command">
+      <production>
+	<string>;</string>
+      </production>
+      <production>
+	<ruleref ref="command"/>
+	<ruleref ref="trail" rep="?"/>
+	<group>
+	  <production>
+	    <string>;</string>
+	  </production>
+	  <production>
+	    <lookahead/>
+	    <regexp>^\s*(}|\Z)</regexp>
+	  </production>
+	</group>
+	<action>
+	  my $r=$item[1];
+	  if (scalar(@{$item[2]})) {
+	    if ($item[2][0][0] eq 'pipe') {
+  	      $r=[\&amp;XML::XSH::Functions::pipe_command,[$r],$item[2][0][1]]
+	    } else {
+   	      $r=[\&amp;XML::XSH::Functions::string_pipe_command,[$r],$item[2][0][1]]
+	    }
+          }
+	  $r
+	</action>
+      </production>
+      <production><directive type="error"/></production>
+    </rule>
+
+    <rule id="statement_or_command">
+      <production><ruleref ref="statement"/></production>
+      <production><ruleref ref="complex_command"/></production>
+    </rule>
+
+    <rule id="block" type="argtype" name="command-block">
+      <production>
+	<string>{</string>
+	<directive type="commit"/>
+	<ruleref ref="statement_or_command" rep="s"/>
+	<string>}</string>
+	<action>[grep ref,@{$item[3]}]</action>
+      </production>
+      <documentation sections="argtypes flow">
+	<title>command-block argument type</title>
+	<shortdesc>single XSH command or a block of XSH commands</shortdesc>
+	<description>
+	  <para>
+	    XSH command or a block of semicolon-separated
+	    commands enclosed within curly brackets.
+	  </para>
+	  <example>
+	    <title>Count paragraphs in each chapter</title>
+	    <code>
+	      $i=0;
+	      foreach //chapter {
+	      $c=./para;
+	      $i=$i+1;
+	      print &quot;$c paragraphs in chapter no.$i&quot;;
+	      }
+	    </code>
+	  </example>
+	</description>	
+      </documentation>
+    </rule>
+
+
+
     <!-- ================== help on types ====================== -->
-    <rule id="type" type="argtype">
-      <production></production>
+    <rule id="type" type="list">
+      <production/>
       <documentation>
 	<title>List of command argument types</title>
 	<description>
@@ -172,7 +839,7 @@ sub new {
     </rule>
     <rule id="STRING">
       <production>
-	<regexp>([^'"\$\\ \t\n\r|;\{\}]|\$[^{]|\$\{[^{}]*\}|]|\\.)+</regexp>
+	<regexp>([^'&quot;\$\\ \t\n\r\|;\{\}]|\$[^{]|\$\{[^{}]*\}|]|\\.)+</regexp>
       </production>
     </rule>
     <rule id="single_quoted_string">
@@ -188,10 +855,10 @@ sub new {
     </rule>
     <rule id="double_quoted_string">
       <production>
-	<regexp>\"([^\"\\]|\\.)*\"</regexp>
+	<regexp>\&quot;([^\&quot;\\]|\\.)*\&quot;</regexp>
 	<action>
 	  local $_=$item[1];
-	  s/^\"|\"$//g;
+	  s/^\&quot;|\&quot;$//g;
 	  s/\\(.)/$1/g;
 	  $_;
 	</action>
@@ -217,30 +884,16 @@ sub new {
 	<regexp>\${{([^}]|}[^}])*}}</regexp>
       </production>
     </rule>
-    <rule id="expressions">
-      <production>
-	<ruleref ref="expression"/>
-	<ruleref ref="expressions"/>
-	<action>[$item[1],@{$item[2]}]</action>
-      </production>
-      <production>
-	<ruleref ref="expression"/>
-	<action>[$item[1]]</action>
-      </production>
-    </rule>
     <rule id="expression" type="argtype">
       <production>
-	<ruleref ref="exp_part"/>
-	<directive type="skip">""</directive>
-	<ruleref ref="expression"/>
-	<action>"$item[1]$item[3]"</action>
+	<ruleref ref="exp_part"/>	
+	<directive type="skip">&quot;&quot;</directive>
+	<ruleref ref="expression" rep="?"/>
+	<action>$item[1].join(&quot;&quot;,@{$item[3]})</action>
       </production>
-      <production>
-	<ruleref ref="exp_part"/>
-	<action>$item[1]</action>
-      </production>
-      <documentation>
+      <documentation sections="argtypes variables manipulation binding">
 	<title>expression argument type</title>
+	<shortdesc>string-like expression</shortdesc>
 	<description>
 	  <para>
 	    A string consisting of unquoted characters other than
@@ -248,18 +901,18 @@ sub new {
 	    characters or quoted characters of any kind. By quoting we
 	    mean preceding a single character with a backslash or
 	    enclosing a part of the string into single quotes '...'  or
-	    double quotes "...". Quoting characters are removed from the
+	    double quotes &quot;...&quot;. Quoting characters are removed from the
 	    string so they must be quoted themselves if they are a part of
-	    the expression: \\, \' or "'", \" or '"'.
+	    the expression: \\, \' or " ' ", \" or ' " '.
 	  </para>
 	  <para>
-	    Variable interpolation is performed on expressions, which
+	    Variable interpolation is performed on expressions. That
 	    means that any substrings of the forms $id or ${id} where $ is
 	    unquoted and id is an identifier are substituted with the
 	    value of the variable named $id.
 	  </para>
 	  <para>
-	    XPath interpolation is performed on expressions, which means
+	    XPath interpolation is performed on expressions. That means
 	    that any substring enclosed in between ${{ and }} is evaluated
 	    in the same way as in the count command and the result of the
 	    evaluation is substituted in its place.
@@ -267,16 +920,47 @@ sub new {
 	</description>
       </documentation>
     </rule>
+    <!-- ================= optional arguments =================== -->
+    <rule id="ws">
+      <production>
+	<regexp>(\s|\n|#[^\n]*)+</regexp>
+      </production>
+    </rule>
+    <rule id="optional_expression">
+      <production>
+	<directive type="skip">&quot;&quot;</directive>
+	<ruleref ref="ws"/>
+	<ruleref ref="expression"/>
+	<action>$item[3]</action>
+      </production>
+    </rule>
+    <rule id="optional_expressions">
+      <production>
+	<directive type="skip">&quot;&quot;</directive>
+	<ruleref ref="ws"/>
+	<ruleref ref="expression" rep="s"/>
+	<action>$item[3]</action>
+      </production>
+    </rule>
+    <rule id="optional_xpath">
+      <production>
+	<directive type="skip">&quot;&quot;</directive>
+	<ruleref ref="ws"/>
+	<ruleref ref="xpath"/>
+	<action>$item[3]</action>
+      </production>
+    </rule>
     <!-- ================== encoding string ====================== -->
     <rule id="enc_string" type="argtype" name="enc-string">
       <production>
 	<ruleref ref="expression"/>
       </production>
-      <documentation>
+      <documentation sections="argtypes configuration">
 	<title>enc_string argument type</title>
+	<shortdesc>character encoding (codepage) identifier</shortdesc>
 	<description>
 	  <para>
-	    an expression which interpolates to a valid encoding
+	    An <xref linkend="expression"/> which interpolates to a valid encoding
 	    string, e.g. to utf-8, utf-16, iso-8859-1, iso-8859-2,
 	    windows-1250 etc.
 	  </para>
@@ -288,11 +972,12 @@ sub new {
       <production>
 	<regexp>[a-zA-Z_][a-zA-Z0-9_]*</regexp>
       </production>
-      <documentation>
+      <documentation sections="argtypes variables documents">
 	<title>id argument type</title>
+	<shortdesc>identifier</shortdesc>
 	<description>
 	  <para>
-	    an identifier, that is, a string beginning with a letter or
+	    An identifier, that is, a string beginning with a letter or
 	    underscore, and containing letters, underscores, and
 	    digits.
 	  </para>
@@ -308,10 +993,11 @@ sub new {
       <production>
 	<ruleref ref="expression"/>
       </production>
-      <documentation>
+      <documentation sections="argtypes documents">
 	<title>Filename argument type</title>
+	<shortdesc>file name</shortdesc>
 	<description>
-	  <para>An expression which interpolates to a valid file name.</para>
+	  <para>An <xref linkend="expression"/> which interpolates to a valid file name.</para>
 	</description>
       </documentation>
     </rule>
@@ -319,69 +1005,61 @@ sub new {
     <rule id="xpath" type="argtype">
       <production>
 	<ruleref ref="id_or_var"/>
-	<literal>:</literal>
+	<directive type="skip">&quot;&quot;</directive>
+	<regexp>:(?!:)</regexp>
 	<ruleref ref="xp"/>
-	<action>[@item[1,3]]</action>
+	<action>[$item[1],$item[4]]</action>
       </production>
       <production>
 	<ruleref ref="xp"/>
-	<action>[undef, $item[1]]</action>
+	<action>[undef,$item[1]]</action>
       </production>
       <production>
-	<directive type="error"></directive>
+	<directive type="error"/>
       </production>
-      <documentation>
+      <documentation sections="argtypes navigation manipulation variables">
 	<title>Xpath argument type</title>
+	<shortdesc>XPath expression</shortdesc>
 	<description>
 	  <para>
 	    Any XPath expression as defined in W3C recommendation at
-	    http://www.w3.org/TR/xpath optionaly preceded with
+	    <ulink url="http://www.w3.org/TR/xpath">http://www.w3.org/TR/xpath</ulink> optionally preceded with
 	    a document identifier followed by colon. If no identifier
 	    is used, the current document is used.
 	  </para>
 	  <example>
-	    <title>Open a document and count all chapters containing a
+	    <title>Open a document and count all sections containing a
 	      subsection in it
 	    </title>
 	    <code>
-	      xsh> open v = mydocument.xml;
-	      xsh> count v://chapter[subsection];
+	      xsh&gt; <userinput>open v = mydocument.xml;</userinput>
+	      xsh&gt; <userinput>count v://section[subsection];</userinput>
 	    </code>
 	  </example>
 	</description>
       </documentation>
     </rule>
+    <rule id="xpcont">
+      <production>
+	<group>
+	  <production>
+	    <ruleref ref="xpfilters"/>
+	  </production>
+	  <production>
+	    <ruleref ref="xpbrackets"/>
+	  </production>
+	</group>
+	<directive type="skip">&quot;&quot;</directive>
+	<ruleref ref="xp" rep="?"/>
+	<action>$item[1].join(&quot;&quot;,@{$item[3]})</action>
+      </production>
+    </rule>
     <rule id="xp">
       <production>
 	<ruleref ref="xpsimple"/>
-	<directive type="skip">""</directive>
-	<group>
-	  <production>
-	    <ruleref ref="xpfilters"/>
-	  </production>
-	  <production>
-	    <ruleref ref="xpbrackets"/>
-	  </production>
-	</group>
-	<directive type="skip">""</directive>
-	<ruleref ref="xp"/>
-	<action>"$item[1]$item[3]$item[5]"</action>
-      </production>
-      <production>
-	<ruleref ref="xpsimple"/>
-	<directive type="skip">""</directive>
-	<group>
-	  <production>
-	    <ruleref ref="xpfilters"/>
-	  </production>
-	  <production>
-	    <ruleref ref="xpbrackets"/>
-	  </production>
-	</group>
-	<action>"$item[1]$item[3]"</action>
-      </production>
-      <production>
-	<ruleref ref="xpsimple"/>
+	<directive type="skip">&quot;&quot;</directive>
+	<ruleref ref="xpcont" rep="?"/>
+	<action>$item[1].join(&quot;&quot;,@{$item[3]})</action>
       </production>
       <production>
 	<ruleref ref="xpstring"/>
@@ -389,68 +1067,70 @@ sub new {
     </rule>
     <rule id="xpfilters">
       <production>
-	<ruleref ref="xpfilter"/>
-	<directive type="skip">""</directive>
-	<ruleref ref="xpfilters"/>
-	<action>"$item[1]$item[3]"</action>
-      </production>
-      <production>
-	<ruleref ref="xpfilter"/>
+	<ruleref ref="xpfilter" rep="s"/>
+	<action>join(&quot;&quot;,@{$item[1]})</action>
       </production>
     </rule>
     <rule id="xpfilter">
       <production>
-	<literal>[</literal>
+	<string>[</string>
 	<ruleref ref="xpinter"/>
-	<literal>]</literal>
-	<action>"[$item[2]]"</action>
+	<string>]</string>
+	<action>&quot;[$item[2]]&quot;</action>
       </production>
     </rule>
     <rule id="xpbracket">
       <production>
-	<literal>(</literal>
+	<string>(</string>
 	<ruleref ref="xpinter"/>
-	<literal>)</literal>
-	<action>"($item[2])"</action>
+	<string>)</string>
+	<action>&quot;($item[2])&quot;</action>
       </production>
     </rule>
     <rule id="xpbrackets">
       <production>
 	<ruleref ref="xpbracket"/>
-	<directive type="skip">""</directive>
-	<ruleref ref="xpfilters"/>
-	<action>"$item[1]$item[3]"</action>
+	<directive type="skip">&quot;&quot;</directive>
+	<ruleref ref="xpfilters" rep="?"/>
+	<action>join &quot;&quot;,$item[1],@{$item[3]}</action>
       </production>
+    </rule>
+    <rule id="xpintercont">
       <production>
-	<ruleref ref="xpbracket"/>
+	<group>
+	  <production>
+	    <ruleref ref="xpfilters"/>
+	  </production>
+	  <production>
+	    <ruleref ref="xpbrackets"/>
+	  </production>
+	</group>
+	<directive type="skip">&quot;&quot;</directive>
+	<ruleref ref="xpinter" rep="?"/>
+	<action>join(&quot;&quot;,$item[1],@{$item[3]})</action>
       </production>
     </rule>
     <rule id="xpinter">
       <production>
 	<ruleref ref="xps"/>
-	<group>
-	  <production><ruleref ref="xpfilters"/></production>
-	  <production><ruleref ref="xpbrackets"/></production>	
-	</group>
-	<directive type="skip">""</directive>
-	<ruleref ref="xpinter"/>
-	<action>"$item[1]$item[2]$item[4]"</action>
+	<directive type="skip">&quot;&quot;</directive>
+	<ruleref ref="xpintercont" rep="?"/>
+	<action>join(&quot;&quot;,$item[1],@{$item[3]})</action>
       </production>
-      <production><ruleref ref="xps"/></production>
     </rule>
     <rule id="xps">
       <production>
-	<regexp>([^][()'"]|'[^']*'|"[^"]*")*</regexp>
+	<regexp>([^][()'&quot;]|'[^']*'|&quot;[^&quot;]*&quot;)*</regexp>
       </production>
     </rule>
     <rule id="xpstring">
       <production>
-	<regexp>'[^']*'|"[^"]*"</regexp>
+	<regexp>'[^']*'|&quot;[^&quot;]*&quot;</regexp>
       </production>
     </rule>
     <rule id="xpsimple">
       <production>
-	<regexp>[^]|"' [();]+</regexp>
+	<regexp>[^]|&quot;' [();]+</regexp>
       </production>
       <production>
 	<ruleref ref="xpbrackets"/>
@@ -465,16 +1145,16 @@ sub new {
     <!-- ================== variables ====================== -->
     <rule id="variable">
       <production>
-	<literal>$</literal>
-	<directive type="skip">""</directive>
+	<string>$</string>
+	<directive type="skip">&quot;&quot;</directive>
 	<ruleref ref="ID"/>
-	<action>"$item[1]$item[3]"</action>
+	<action>&quot;$item[1]$item[3]&quot;</action>
       </production>
     </rule>
     <rule id="nodelistvariable">
       <production>
-	<literal>%</literal>
-	<directive type="skip">""</directive>
+	<string>%</string>
+	<directive type="skip">&quot;&quot;</directive>
 	<ruleref ref="id_or_var"/>
 	<action>$item[3]</action>
       </production>
@@ -482,185 +1162,143 @@ sub new {
     <!-- ================== EOF ====================== -->
     <rule id="eof">
       <production>
-	<regexp>$</regexp>
+	<regexp>^\Z</regexp>
 	<action>1;</action>
       </production>
     </rule>
     <!-- ================== STARTRULE and such ====================== -->
     <rule id="startrule">
       <production>
-	<ruleref ref="commands"/>
+	<ruleref ref="shell"/>
+	<directive type="commit"/>
 	<ruleref ref="eof"/>
 	<action>XML::XSH::Functions::run_commands($item[1])</action>
       </production>
       <production>
-	<directive type="error">syntax error</directive>
-      </production>
-    </rule>
-    <rule id="cmd">
-      <production>
-	<ruleref ref="command"/>
-	<group>
-	  <production><literal>;</literal></production>
-	  <production><ruleref ref="trail"/></production>
-	</group>
-	<action>
-	  if (ref($item[2]) eq 'ARRAY') {
-	    if ($item[2][0] eq 'pipe') {
-	      [[\&amp;XML::XSH::Functions::pipe_command,$item[1],$item[2][1]]]
-	    } elsif ($item[2][0] eq 'var') {
-              [[\&amp;XML::XSH::Functions::string_pipe_command,$item[1],$item[2][1]]]
-            }
-	  } else { $item[1] }
-	</action>
+	<ruleref ref="statement_or_command" rep="s"/>
+	<ruleref ref="eof"/>
+	<action>XML::XSH::Functions::run_commands($item[1])</action>
       </production>
     </rule>
     <rule id="trail">
       <production>
-	<literal>|></literal>
+	<string>|&gt;</string>
+	<directive type="commit"/>
 	<ruleref ref="variable"/>
-	<action>['var',$item[2]]</action>
+	<action>['var',$item[3]]</action>
       </production>
       <production>
-	<literal>|</literal>
-	<ruleref ref="cmdline"/>
-	<action>['pipe',$item[2]]</action>
+	<string>|</string>
+	<directive type="commit"/>
+	<ruleref ref="shline"/>
+	<action>['pipe',$item[3]]</action>
+      </production>
+    </rule>
+    <rule id="shline_nosc">
+      <production>
+	<regexp>([^;()\\&quot;'\|]|\|[^&gt;]|\\.|\&quot;([^\&quot;\\]|\\.)*\&quot;|\'([^\'\\]|\\\'|\\\\|\\[^\'\\])*\')*</regexp>
+      </production>
+    </rule>
+    <rule id="shline_inter">
+      <production>
+	<regexp>([^()\\&quot;']|\\.|\&quot;([^\&quot;\\]|\\.)*\&quot;|\'([^\'\\]|\\\'|\\\\|\\[^\'\\])*\')*</regexp>
+      </production>
+    </rule>
+    <rule id="shline_bracket">
+      <production>
+	<string>(</string>
+	<ruleref ref="shline_inter"/>
+	<ruleref ref="shline_bracket" rep="?"/>
+	<ruleref ref="shline_inter"/>
+	<string>)</string>
+	<action>join(&quot;&quot;,'(',$item[2],@{$item[3]},$item[4],')')</action>
+      </production>      
+    </rule>
+    <rule id="shline">
+      <production>
+	<ruleref ref="shline_nosc"/>
+	<ruleref ref="shline_bracket" rep="?"/>
+	<ruleref ref="shline_nosc"/>
+	<action>join(&quot;&quot;,$item[1],@{$item[2]},$item[3])</action>
       </production>
     </rule>
     <rule id="shell">
       <production>
 	<regexp>!\s*</regexp>
-	<ruleref ref="cmdline"/>
+	<regexp>.*</regexp>
 	<action>[[\&amp;XML::XSH::Functions::sh,$item[2]]]</action>
       </production>
-    </rule>
-    <rule id="cmdline">
-      <production>
-	<regexp>[^\n]+(\n|$)</regexp>
-	<action>chomp($item[1]); $item[1]</action>
-      </production>
-    </rule>
-    <rule id="cmd_or_pipe">
-      <production><ruleref ref="shell"/></production>
-      <production><ruleref ref="cmd"/></production>
-    </rule>
-    <rule id="semicolon">
-      <production>
-	<literal>;</literal>
-      </production>
-    </rule>
-    <rule id="commands">
-      <production>
-	<ruleref ref="cmd_or_pipe" rep="s"/>
-	<ruleref ref="command" rep="?"/>
-	<action>[ map {@$_} @{$item[1]}, @{$item[2]} ]</action>
-      </production>
-      <production>
-	<ruleref ref="command"/>
-	<action>$item[1]</action>
-      </production>
-    </rule>
-    <rule id="block" name="perl-block">
-      <production>
-	<literal>{</literal>
-	<ruleref ref="commands"/>
-	<literal>}</literal>
-	<action>$item[2]</action>
-      </production>
-      <documentation>
-	<title>Perl-block</title>
-	<description>
-	  <para>Perl-block is a block of arbitrary perl code
-	    encosed in curly brackets: { ... }</para>
-	  <example>
-	    <code>map { $_=uc($_) } //chapter/title/text()</code>
-	  </example>
-	  <example>
-	    <code>foreach { grep /A[xyz]/ glob ('*.xml') } { f=$__; select f; call process_file }</code>
-	  </example>
-	</description>
-      </documentation>
-    </rule>    
-    <rule id="command_block" type="argtype" name="command-block">
-      <production>
-	<group>
-	  <production><ruleref ref="block"/></production>
-	  <production><ruleref ref="command"/></production>
-	</group>
-      </production>
-      <documentation>
-	<title>command-block argument type</title>
-	<description>
-	  <para>
-	    XSH command or a block of semicolon-separated
-	    commands enclosed within curly brackets.
-	  </para>
-	  <example>
-	    <title>Count paragraphs in each chapter</title>
-	    <code>
-	      $i=0;
-	      foreach //chapter {
-	      $c=./para;
-	      $i=$i+1;
-	      print "$c paragraphs in chapter no.$i";
-	      }
-	    </code>
-	  </example>
-	</description>	
-      </documentation>
     </rule>
     <!-- ================== STATEMENTS ====================== -->
     <rule id="condition">
       <production><directive type="perl_codeblock"/></production>
       <production><ruleref ref="xpath"/></production>
     </rule>
-    <rule type='command' id="if" name="if">
+    <rule id="else_block" name="else">
       <production>
 	<selfref/>
-	<ruleref ref="condition"/>
+	<directive type="commit"/>
 	<ruleref ref="block"/>
-	<regexp>else\s</regexp>
-	<ruleref ref="block"/>
-	<action>[\&amp;XML::XSH::Functions::if_statement,$item[2],$item[3],$item[5]]</action>
+	<action>$item[3]</action>
       </production>
+    </rule>
+    <!-- if -->
+    <rule type="command" id="if" name="if">
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="condition"/>
-	<ruleref ref="command_block"/>
-	<action>[\&amp;XML::XSH::Functions::if_statement,$item[2],$item[3]]</action>
+	<ruleref ref="block"/>
+	<ruleref ref="else_block" rep="?"/>
+	<action>[\&amp;XML::XSH::Functions::if_statement,$item[3],$item[4],@{$item[5]}]</action>
       </production>
-      <documentation>
-	<usage>if <xref linkend="xpath"/>|<xref linkend="block"/>
-	  <xref
-	    linkend="command_block"/></usage>
+      <documentation sections="flow">
+	<usage>if <xref linkend="xpath"/>|<xref linkend="perl_code"/> <xref linkend="command"/>
+	</usage>
+	<usage>
+          if <xref linkend="xpath"/>|<xref linkend="perl_code"/>
+	  <xref linkend="block"/> [ else <xref linkend="block"/> ]
+	</usage>
+	<shortdesc>if statement</shortdesc>
 	<description>
 	  <para>
-	    Execute <xref linkend="command_block"/> if the given 
-	    <xref linkend="xpath"/> or <xref linkend="block"/>
+	    Execute <xref linkend="block"/> if the given 
+	    <xref linkend="xpath"/> or <xref linkend="perl_code"/>
 	    expression evaluates to a non-emtpty
 	    node-list, true boolean-value, non-zero number or non-empty
-	    literal.
+	    literal. 
 	  </para>
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="unless" name="unless">
+    <rule id="if_command" name="if" inline="yes">
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="condition"/>
-	<ruleref ref="block"/>
-	<regexp>else\s</regexp>
-	<ruleref ref="block"/>
-	<action>[\&amp;XML::XSH::Functions::unless_statement,$item[2],$item[3],$item[5]]</action>
-      </production>    
+	<ruleref ref="command"/>
+	<action>[\&amp;XML::XSH::Functions::if_statement,$item[3],[$item[4]]]</action>
+      </production>
+    </rule>
+    <!-- unless -->
+    <rule type="command" id="unless" name="unless">
       <production>
-	<selfref/>	
+	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="condition"/>
-	<ruleref ref="command_block"/>
-	<action>[\&amp;XML::XSH::Functions::unless_statement,$item[2],$item[3]]</action>
-      </production>    
-      <documentation>
-	<usage>unless</usage>
+	<ruleref ref="block"/>
+	<ruleref ref="else_block" rep="?"/>
+	<action>[\&amp;XML::XSH::Functions::unless_statement,$item[3],$item[4],@{$item[5]}]</action>
+      </production>
+      <documentation sections="flow">
+	<usage>unless <xref linkend="xpath"/>|<xref linkend="perl_code"/>
+	  <xref linkend="command"/>
+	</usage>
+	<usage>
+          unless <xref linkend="xpath"/>|<xref linkend="perl_code"/>
+	  <xref linkend="block"/> [ else <xref linkend="block"/> ]
+	</usage>
+	<shortdesc>negated if statement</shortdesc>
 	<description>
 	  <para>Like if but negating the result of the expression.</para>
 	</description>
@@ -669,32 +1307,64 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
+    <rule id="unless_command" name="unless" inline="yes">
+      <production>
+	<selfref/>
+	<directive type="commit"/>
+	<ruleref ref="condition"/>
+	<ruleref ref="command"/>
+	<action>[\&amp;XML::XSH::Functions::unless_statement,$item[3],[$item[4]]]</action>
+      </production>
+    </rule>
+    <!-- while -->
+    <rule id="while_command" name="while" inline="yes">
+      <production>
+	<selfref/>
+	<directive type="commit"/>
+	<ruleref ref="condition"/>
+	<ruleref ref="command"/>
+	<action>[\&amp;XML::XSH::Functions::while_statement,$item[3],[$item[4]]]</action>
+      </production>
+    </rule>
     <rule id="while" type="command" name="while">
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="condition"/>
-	<ruleref ref="command_block"/>
-	<action>[\&amp;XML::XSH::Functions::while_statement,$item[2],$item[3]]</action>
+	<ruleref ref="block"/>
+	<action>[\&amp;XML::XSH::Functions::while_statement,$item[3],$item[4]]</action>
       </production>
-      <documentation>
-	<usage>while <xref linkend="xpath"/>|<xref linkend="block"/> <xref
-	    linkend="command_block"/></usage>
+      <documentation sections="flow">
+	<usage>while <xref linkend="xpath"/>|<xref linkend="perl_code"/> <xref linkend="block"/></usage>
+	<shortdesc>simple while loop</shortdesc>
 	<description>
-	  <para> Execute <xref linkend='command_block'/> as long as
-	    the given <xref linkend='xpath'/> or <xref
-	      linkend='block'/> expression evaluates to a non-emtpty
+	  <para> Execute <xref linkend="block"/> as long as
+	    the given <xref linkend="xpath"/> or <xref linkend="perl_code"/> expression evaluates to a non-emtpty
 	    node-list, true boolean-value, non-zero number or
 	    non-empty literal.
 	  </para>
 	  <example>
 	    <title>The commands have the same results</title>
 	    <code>
-	      xsh> while /table/row remove /table/row[1];
-	      xsh> remove /table/row;
+	      xsh&gt; <userinput>while /table/row remove /table/row[1];</userinput>
+	      xsh&gt; <userinput>remove /table/row;</userinput>
 	    </code>
 	  </example>
 	</description>
       </documentation>
+    </rule>
+    <!-- foreach -->
+    <rule id="foreach_command" name="foreach" inline="yes">
+      <aliases>
+	<alias name="for"/>
+      </aliases>
+      <production>
+	<selfref/>
+	<directive type="commit"/>
+	<ruleref ref="condition"/>
+	<ruleref ref="command"/>
+	<action>[\&amp;XML::XSH::Functions::foreach_statement,$item[3],[$item[4]]]</action>
+      </production>
     </rule>
     <rule id="foreach" type="command" name="foreach">
       <aliases>
@@ -702,13 +1372,16 @@ sub new {
       </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="condition"/>
-	<ruleref ref="command_block"/>
-	<action>[\&amp;XML::XSH::Functions::foreach_statement,$item[2],$item[3]]</action>
+	<ruleref ref="block"/>
+	<action>[\&amp;XML::XSH::Functions::foreach_statement,$item[3],$item[4]]</action>
       </production>
-      <documentation>
-	<usage>foreach <xref linkend="xpath"/>|<xref linkend="block"/> <xref
-	    linkend="command_block"/></usage>
+      <documentation sections="flow">
+	<usage>foreach <xref linkend="xpath"/>|<xref linkend="perl_code"/> 
+	  <xref linkend="command"/>
+	  <xref linkend="block"/></usage>
+	<shortdesc>loop iterating over a node-list or perl array</shortdesc>
 	<description>
 	  <para>
 	    If the first argument is an <xref linkend="xpath"/>
@@ -718,44 +1391,47 @@ sub new {
 	    expressions are evaluated in its context.
 	  </para>
 	  <para>
-	    If the first argument is a <xref linkend="block"/>,
-	    it is evaluated and the resulting perl-list is 
-	    iterated setting the variable $__
-	    to be each element of the list in turn. It works much
-	    like perl's foreach, except that the variable used
-	    consists of two underscores.
+	    If the first argument is a <xref linkend="perl_code"/>, it
+	    is evaluated and the resulting perl-list is iterated
+	    setting the variable $__ (note that there are
+	    <emphasis>two</emphasis> underscores!)  to be each element
+	    of the list in turn. It works much like perl's foreach,
+	    except that the variable used consists of two underscores.
 	  </para>
 	  <example>
 	    <title>Move all employee elements in a company element
 	      into a staff subelement of the same company</title>
-	    <code>xsh> foreach //company xmove ./employee into ./staff;</code>
+	    <code>xsh&gt; <userinput>foreach //company xmove ./employee into ./staff;</userinput></code>
 	  </example>
 	  <example>
 	    <title>List content of all XML files in current directory</title>
 	    <code>
-	      xsh> foreach { glob('*.xml') } { open f=$__; list f:/; }
+	      xsh&gt; <userinput>foreach { glob('*.xml') } { open f=$__; list f:/; }</userinput>
 	    </code>
 	  </example>
 	</description>
       </documentation>
     </rule>
+    <!-- def -->
     <rule id="def" type="command" name="def">
       <aliases>
 	<alias name="define"/>
       </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="ID"/>
-	<ruleref ref="command_block"/>
-	<action>[\&amp;XML::XSH::Functions::def,$item[2],$item[3]]</action>
+	<ruleref ref="block"/>
+	<action>[\&amp;XML::XSH::Functions::def,$item[3],$item[4]]</action>
       </production>
-      <documentation>
-	<usage>def <xref linkend="ID"/> <xref linkend="command_block"/></usage>
+      <documentation sections="flow">
+	<usage>def <xref linkend="ID"/> <xref linkend="block"/></usage>
+	<shortdesc>sub-routine (macro) declaration</shortdesc>
 	<description>
 	  <para>
-	    Define a new XSH routine named <xref linkend='ID'/>. The
-	    <xref linkend='command_block'/> may be later invoked using
-	    the `call <xref linkend='ID'/>' command.
+	    Define a new XSH routine named <xref linkend="ID"/>. The
+	    <xref linkend="block"/> may be later invoked using
+	    the <literal><xref linkend="call_command"/> <xref linkend="ID"/></literal> command.
 	  </para>
 	</description>
 	<see-also>
@@ -764,56 +1440,94 @@ sub new {
       </documentation>
     </rule>
     <!-- ================== COMMANDS ====================== -->
-    <rule type='command' id="assign_command" name="assign">
+    <rule id="assign_command" type="command" name="assign" inline="yes">
       <production>
-	<selfref/>
+	<group rep="?">
+	  <production><selfref/></production>
+	</group>
 	<ruleref ref="variable"/>
-	<literal>=</literal>
+	<string>=</string>
 	<ruleref ref="xpath"/>
 	<action>[\&amp;XML::XSH::Functions::xpath_assign,$item[2],$item[4]]</action>
       </production>
       <production>
-	<ruleref ref="variable"/>
-	<literal>=</literal>
-	<ruleref ref="xpath"/>
-	<action>[\&amp;XML::XSH::Functions::xpath_assign,$item[1],$item[3]]</action>
-      </production>
-      <production>
-	<selfref/>
+	<group rep="?">
+	  <production><selfref/></production>
+	</group>
 	<ruleref ref="nodelistvariable"/>
-	<literal>=</literal>
+	<string>=</string>
 	<ruleref ref="xpath"/>
 	<action>[\&amp;XML::XSH::Functions::nodelist_assign,$item[2],$item[4]]</action>
       </production>
-      <production>
-	<ruleref ref="nodelistvariable"/>
-	<literal>=</literal>
-	<ruleref ref="xpath"/>
-	<action>[\&amp;XML::XSH::Functions::nodelist_assign,$item[1],$item[3]]</action>
-      </production>
-      <documentation>
-	<usage>assign $<xref linkend='ID'/>=<xref
-	    linkend="expression"/> or 
-	  $<xref linkend='ID'/>=<xref
-	    linkend="expression"/> or
-	  assign %<xref linkend='ID'/>=<xref
-	    linkend="xpath"/> or 
-	  %<xref linkend='ID'/>=<xref
-	    linkend="xpath"/></usage>
+      <documentation sections="variables">
+	<usage>assign $<xref linkend="ID"/>=<xref linkend="xpath"/>
+	</usage>
+	<usage>
+	  $<xref linkend="ID"/>=<xref linkend="xpath"/></usage>
+	<usage>
+	  assign %<xref linkend="ID"/>=<xref linkend="xpath"/></usage>
+	<usage>
+	  %<xref linkend="ID"/>=<xref linkend="xpath"/></usage>
+	<shortdesc>variable assignment</shortdesc>
 	<description>
 	  <para> 
 	    In the first two cases (where dollar sign appears)
-	    store the result of interpolation of the <xref
-	      linkend="expression"/> in a variable named $<xref
-	      linkend='ID'/>. The variable may be later used in other
-	    expressions or even in perl-code as $<xref linkend='ID'/> or
-	    ${<xref linkend='ID'/>}.
+	    store the result of evaluation of the <xref linkend="xpath"/> in a variable named $<xref linkend="ID"/>.
+	    In this case, <xref linkend="xpath"/> is evaluated in a
+	    simmilar way as in the case of the <xref linkend="count_command"/>: if it results in a literal
+	    value this value is used. If it results in a node-list,
+	    number of nodes occuring in that node-list is used.
+	    Use the <literal>string()</literal> XPath function
+	    to obtain a literal values in these cases.
 	  </para>
+	  <example>
+	    <title>String expressions</title>
+	    <code>xsh&gt; <userinput>$a=string(chapter/title)</userinput>
+	      xsh&gt; <userinput>$b=&quot;hallo world&quot;</userinput>
+	    </code>
+	  </example>
+	  <example>
+	    <title>Arithmetic expressions</title>
+	    <code>xsh&gt; <userinput>$a=5*100</userinput>
+	      xsh&gt; <userinput>$a</userinput>
+	      $a=500
+	      xsh&gt; <userinput>$a=(($a+5) div 10)</userinput>
+	      xsh&gt; <userinput>$a</userinput>
+	      $a=50.5
+	    </code>
+	  </example>
+	  <example>
+	    <title>Counting nodes</title>
+	    <code>xsh&gt; <userinput>$a=//chapter</userinput>
+	      xsh&gt; <userinput>$a</userinput>
+	      $a=10
+	      xsh&gt; <userinput>%chapters=//chapter</userinput>
+	      xsh&gt; <userinput>$a=%chapters</userinput>
+	      xsh&gt; <userinput>$a</userinput>
+	      $a=10
+	    </code>
+	  </example>
+	  <example>
+	    <title>Some caveats of counting node-lists</title>
+	    <code>xsh&gt; <userinput>ls ./creature</userinput>
+	          &lt;creature race='hobbit' name=&quot;Bilbo&quot;/&gt;
+
+	      ## WRONG (@name results in a singleton node-list) !!!
+	      xsh&gt; <userinput>$name=@name</userinput>
+	      xsh&gt; <userinput>$name</userinput>
+	      $a=1
+
+	      ## CORRECT (use string() function)
+	      xsh&gt; <userinput>$name=string(@name)</userinput>
+	      xsh&gt; <userinput>$name</userinput>
+	      $a=Biblo
+	    </code>
+	  </example>
 	  <para> 
 	    In the other two cases (where percent sign appears)
 	    find all nodes matching the given <xref linkend="xpath"/>
-	    and store the resulting nodelist in the variable
-	    named %<xref linkend='ID'/>. The variable may be later used
+	    and store the resulting node-list in the variable
+	    named %<xref linkend="ID"/>. The variable may be later used
 	    instead of an XPath expression.
 	  </para>
 	</description>
@@ -822,19 +1536,43 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule id="print_var_command">
+    <rule id="print_var_command" inline="yes">
       <production>
 	<ruleref ref="variable"/>
 	<action>[\&amp;XML::XSH::Functions::print_var,$item[1]]</action>
       </production>
     </rule>
-    <rule type='command' id="list_defs_command" name="defs">
+    <rule id="options_command" type="command" name="options" inline="yes">
+      <aliases>
+	<alias name="flags"/>
+      </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
+	<action>[\&amp;XML::XSH::Functions::list_flags]</action>
+      </production>
+      <documentation sections="information configuration">
+	<usage>options</usage>
+	<shortdesc>list current settings using XSH syntax</shortdesc>
+	<description>
+	  <para>List current values of all XSH flags and options (such as
+	  validation flag or query-encoding).</para>
+	  <example>
+	    <title>Store current settings in your .xshrc</title>
+	    <code>xsh&gt; <userinput>options | cat &gt; ~/.xshrc</userinput></code>
+	  </example>
+	</description>
+      </documentation>
+    </rule>
+    <rule id="list_defs_command" type="command" name="defs" inline="yes">
+      <production>
+	<selfref/>
+	<directive type="commit"/>
 	<action>[\&amp;XML::XSH::Functions::list_defs]</action>
       </production>
-      <documentation>
+      <documentation sections="information">
 	<usage>defs</usage>
+	<shortdesc>list all user-defined routines (macros)</shortdesc>
 	<description>
 	  <para>List names of all defined XSH routines.</para>
 	</description>
@@ -844,17 +1582,19 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="include_command" name="include">
+    <rule id="include_command" type="command" name="include" inline="yes">
       <aliases>
 	<alias name="." regexp="\."/>
       </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="filename"/>
-	<action>[\&amp;XML::XSH::Functions::include,$item[2]]</action>
+	<action>[\&amp;XML::XSH::Functions::include,$item[3]]</action>
       </production>
-      <documentation>
+      <documentation sections="flow">
 	<usage>include <xref linkend="filename"/></usage>
+	<shortdesc>include another XSH source in current position</shortdesc>
 	<description>
 	  <para>
 	    Include a file named <xref linkend="filename"/> and execute all XSH
@@ -863,69 +1603,78 @@ sub new {
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="call_command" name="call">
+    <rule id="call_command" type="command" name="call" inline="yes">
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::call,$item[2]]</action>
+	<action>[\&amp;XML::XSH::Functions::call,$item[3]]</action>
       </production>
-      <documentation>
-	<usage>call <xref linkend='ID'/></usage>
+      <documentation sections="flow">
+	<usage>call <xref linkend="ID"/></usage>
+	<shortdesc>call user-defined routine (macro)</shortdesc>
 	<description>
 	  <para>
-	    Call an XSH subroutine named <xref linkend='ID'/> previously
+	    Call an XSH subroutine named <xref linkend="ID"/> previously
 	    created using def.
 	  </para>
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="help_command" name="help">
+    <rule id="help_command" type="command" name="help" inline="yes">
       <aliases>
 	<alias name="?" regexp="\?"/>
       </aliases>
       <production>
-	<selfref/>
-	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::help,$item[2]]</action>
+	<selfref sep="no"/>
+	<directive type="commit"/>
+	<ruleref ref="optional_expression" rep="?"/>
+	<action>[\&amp;XML::XSH::Functions::help,@{$item[3]}]</action>
       </production>
-      <production>
-	<selfref/>
-	<action>[\&amp;XML::XSH::Functions::help]</action>
-      </production>
-      <documentation>
+      <documentation sections="information">
 	<usage>help <xref linkend="command"/>|argument-type</usage>
+	<shortdesc>on-line documentation</shortdesc>
 	<description>
 	  <para>Print help on a given command or argument type.</para>
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="exec_command" name="exec">
+    <rule id="exec_command" type="command" name="exec" inline="yes">
       <aliases>
 	<alias name="system"/>
       </aliases>
       <production>
 	<selfref/>
-	<ruleref ref="expressions"/>
-	<action>[\&amp;XML::XSH::Functions::sh,join(" ",@{$item[2]})]</action>
+	<directive type="commit"/>
+	<ruleref ref="expression" rep="s"/>
+	<action>[\&amp;XML::XSH::Functions::sh,join(&quot; &quot;,@{$item[3]})]</action>
       </production>
-      <documentation>
+      <documentation sections="binding">
 	<usage>exec <xref linkend="expression"/> [<xref linkend="expression"/> ...]</usage>
+	<shortdesc>execute a shell command</shortdesc>
 	<description>
 	  <para>execute the system command(s) in <xref linkend="expression"/>s.
 	  </para>
 	  <example>
-	    <title>Count words in "hallo wold" string, then print name
+	    <title>Count words in &quot;hallo wold&quot; string, then print name
 	      of your machine's operating system.</title>
 	    <code>
-	      exec echo hallo world       # prints hallo world
-	      exec "echo hallo word | wc" # counts words in hallo world
-	      exec uname;                 # prints operating system name
+	      exec echo hallo world;                 # prints hallo world
+	      exec &quot;echo hallo word | wc&quot;; # counts words in hallo world
+	      exec uname;                            # prints operating system name
 	    </code>
 	  </example>
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="xslt_command" name="xslt">
+    <rule id="xslt_params">
+      <production>
+	<regexp>(params|parameters)\s</regexp>
+	<ruleref ref="param" rep="s"/>
+	<action>$item[2]</action>
+      </production>
+    </rule>
+    <rule id="xslt_command" type="command" name="xslt" inline="yes">
       <aliases>
 	<alias name="transform"/>
 	<alias name="xsl"/>
@@ -934,50 +1683,51 @@ sub new {
       </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="expression"/>
 	<ruleref ref="filename"/>
 	<ruleref ref="expression"/>
-	<regexp>(params|parameters)\s</regexp>
-	<ruleref ref="param" rep="s"/>
-	<action>[\&amp;XML::XSH::Functions::xslt,@item[2,3,4,6]]</action>
+	<ruleref ref="xslt_params" rep="?"/>
+	<action>[\&amp;XML::XSH::Functions::xslt,@item[3,4,5],@{$item[6]}]</action>
       </production>
-      <production>
-	<selfref/>
-	<ruleref ref="expression"/>
-	<ruleref ref="filename"/>
-	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::xslt,@item[2,3,4]]</action>
-      </production>
-      <documentation>
-	<usage>xslt <xref linkend='ID'/><xref
-	    linkend="filename"/></usage>
+      <documentation sections="manipulation">
+	<usage>xslt <xref linkend="ID"/> <xref linkend="filename"/> <xref linkend="ID"/> [(params|parameters) name=<xref linkend="expression"/> [name=<xref linkend="expression"/> ...]]</usage>
+	<shortdesc>transform document with XSLT</shortdesc>
 	<description>
 	  <para>
 	    Load an XSLT stylesheet from a file and use it to transform
-	    the document of the first <xref linkend='ID'/> into a new
-	    document named <xref linkend='ID'/>. Parameters
+	    the document of the first <xref linkend="ID"/> into a new
+	    document named <xref linkend="ID"/>. Parameters
 	    may be passed to a stylesheet after params keyword in the
 	    form of a list of name=value pairs where name is the
-	    parameter name and value is an expression interpolating to
-	    its value.
+	    parameter name and value is an <xref linkend="expression"/> interpolating to
+	    its value. The resulting value is interpretted by XSLT
+	    processor as an XPath expression so e.g. quotes surrounding
+	    a XPath string have to be quoted themselves to preveserve
+	    them during the XSH expression interpolation.           
 	  </para>
+	  <example>
+	    <code>xslt src stylesheet.xsl rslt params font=&quot;'14pt'&quot; color=&quot;'red'&quot;</code>
+	  </example>
 	</description>
       </documentation>
     </rule>
     <rule id="param">
       <production>
 	<regexp>[^=\s]+</regexp>
-	<literal>=</literal>
+	<string>=</string>
 	<ruleref ref="expression"/>
 	<action>[$item[1],$item[3]]</action>
       </production>
     </rule>
-    <rule type='command' id="files_command" name="files">
+    <rule id="files_command" type="command" name="files" inline="yes">
       <production>
 	<selfref/>
 	<action>[\&amp;XML::XSH::Functions::files]</action>
       </production>
-      <documentation>
+      <documentation sections="information">
+	<usage>files</usage>
+	<shortdesc>display a list of open files</shortdesc>
 	<description>
 	  <para>List open files and their identifiers.</para>
 	</description>
@@ -987,7 +1737,7 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="var_command" name="variables">
+    <rule id="var_command" type="command" name="variables" inline="yes">
       <aliases>
 	<alias name="vars"/>
 	<alias name="var"/>
@@ -996,8 +1746,9 @@ sub new {
 	<selfref/>
 	<action>[\&amp;XML::XSH::Functions::variables]</action>
       </production>
-      <documentation>
+      <documentation sections="information">
 	<usage>variables</usage>
+	<shortdesc>display a list of defined variables</shortdesc>
 	<description>
 	  <para>List all defined variables and their values.</para>
 	</description>
@@ -1007,35 +1758,34 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="copy_command" name="copy">
+    <rule id="copy_command" type="command" name="copy" inline="yes">
       <aliases>
 	<alias name="cp"/>
       </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="xpath"/>
 	<ruleref ref="loc"/>
 	<ruleref ref="xpath"/>
-	<action>[\&amp;XML::XSH::Functions::copy,@item[2,4,3]]</action>
+	<action>[\&amp;XML::XSH::Functions::copy,@item[3,5,4]]</action>
       </production>
-      <documentation>
+      <documentation sections="manipulation">
 	<usage>copy <xref linkend="xpath"/> <xref linkend="loc"/> <xref linkend="xpath"/></usage>
+	<shortdesc>copy nodes (in the one-to-one mode)</shortdesc>
 	<description>
 	  <para>
-	    Copies nodes matching the first <xref linkend='xpath'/> to
-	    the destinations determined by the <xref
-	      linkend='loc'/> directive relative to the second <xref
-	      linkend='xpath'/>. If more than one node matches the first
-	    <xref linkend='xpath'/> than it is copied to the position
+	    Copies nodes matching the first <xref linkend="xpath"/> to
+	    the destinations determined by the <xref linkend="loc"/> directive relative to the second <xref linkend="xpath"/>. If more than one node matches the first
+	    <xref linkend="xpath"/> than it is copied to the position
 	    relative to the corresponding node matched by the second
-	    <xref linkend='xpath'/> according to the order in which are
-	    nodes matched. Thus, the n'th node matching the first <xref
-	      linkend='xpath'/> is copied to the location relative to the
-	    n'th node matching the second <xref linkend='xpath'/>. The
-	    possible values for <xref linkend='loc'/> are: after,
+	    <xref linkend="xpath"/> according to the order in which are
+	    nodes matched. Thus, the n'th node matching the first <xref linkend="xpath"/> is copied to the location relative to the
+	    n'th node matching the second <xref linkend="xpath"/>. The
+	    possible values for <xref linkend="loc"/> are: after,
 	    before, into, replace and cause copying the source nodes
 	    after, before, into (as the last child-node).  the
-	    destination nodes. If replace <xref linkend='loc'/> is
+	    destination nodes. If replace <xref linkend="loc"/> is
 	    used, the source node is copied before the destination node
 	    and the destination node is removed.
 	  </para>
@@ -1066,60 +1816,58 @@ sub new {
 	  <example>
 	    <title>Replace living-thing elements in the document b with
 	      the coresponding creature elements of the document a.</title>
-	    <code>xsh> copy a://creature replace b://living-thing</code>             
+	    <code>xsh&gt; <userinput>copy a://creature replace b://living-thing</userinput></code>             
 	  </example>
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="xcopy_command" name="xcopy">
+    <rule id="xcopy_command" type="command" name="xcopy" inline="yes">
       <aliases>
 	<alias name="xcp"/>
       </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="xpath"/>
 	<ruleref ref="loc"/>
 	<ruleref ref="xpath"/>
-	<action>[\&amp;XML::XSH::Functions::copy,@item[2,4,3],1]</action>
+	<action>[\&amp;XML::XSH::Functions::copy,@item[3,5,4],1]</action>
       </production>
-      <documentation>
+      <documentation sections="manipulation">
 	<usage>xcopy <xref linkend="xpath"/> <xref linkend="loc"/> <xref linkend="xpath"/></usage>
+	<shortdesc>copy nodes (in the all-to-every mode)</shortdesc>
 	<description>
 	  <para>
 	    xcopy is similar to copy, but copies *all* nodes matching
-	    the first <xref linkend='xpath'/> to *all* destinations determined by the
-	    <xref linkend='loc'/> directive relative to the
-	    second <xref linkend='xpath'/>. See copy
+	    the first <xref linkend="xpath"/> to *all* destinations determined by the
+	    <xref linkend="loc"/> directive relative to the
+	    second <xref linkend="xpath"/>. See copy
 	    for detailed description of xcopy arguments.
 	  </para>
 	  <example>
 	    <title>Copy all middle-earth creatures within the document a
 	      into every world of the document b.</title>
-	    <code>xsh> xcopy a:/middle-earth/creature into b://world</code>
+	    <code>xsh&gt; <userinput>xcopy a:/middle-earth/creature into b://world</userinput></code>
 	  </example>
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="cd_command" name="lcd">
+    <rule id="cd_command" type="command" name="lcd" inline="yes">
       <aliases>
 	<alias name="chdir"/>
       </aliases>
       <production>
-	<selfref/>
-	<ruleref ref="filename"/>
-	<action>[\&amp;XML::XSH::Functions::cd,$item[2]]</action>
+	<selfref sep="no"/>
+	<directive type="commit"/>
+	<ruleref ref="optional_expression" rep="?"/>
+	<action>[\&amp;XML::XSH::Functions::cd,@{$item[3]}]</action>
       </production>
-      <production>
-	<selfref/>
-	<action>[\&amp;XML::XSH::Functions::cd]</action>
-      </production>
-      <documentation>
+      <documentation sections="binding">
 	<usage>lcd <xref linkend="expression"/></usage>
+	<shortdesc>change system working directory</shortdesc>
 	<description>
 	  <para>
-	    Changes the filesystem working directory to <xref
-	      linkend='expression'/>, if possible.  If <xref
-	      linkend='expression'/> is omitted, changes to the directory
+	    Changes the filesystem working directory to <xref linkend="expression"/>, if possible.  If <xref linkend="expression"/> is omitted, changes to the directory
 	    specified in HOME environment variable, if set; if not,
 	    changes to the directory specified by LOGDIR environment
 	    variable.
@@ -1127,32 +1875,24 @@ sub new {
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="insert_command" name="insert">
+    <rule id="insert_command" type="command" name="insert" inline="yes">
       <aliases>
 	<alias name="add"/>
       </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="nodetype"/>
 	<ruleref ref="expression"/>
+	<ruleref ref="namespace" rep="?"/>
 	<ruleref ref="loc"/>
 	<ruleref ref="xpath"/>
-	<action>[\&amp;XML::XSH::Functions::insert,@item[2,3,5,4],undef,0]</action>
+	<action>[\&amp;XML::XSH::Functions::insert,@item[3,4,7,6],$item[5][0],0]</action>
       </production>
-      <production>
-	<selfref/>
-	<ruleref ref="nodetype"/>
-	<ruleref ref="expression"/>
-	<ruleref ref="namespace"/>
-	<ruleref ref="loc"/>
-	<ruleref ref="xpath"/>
-	<action>[\&amp;XML::XSH::Functions::insert,@item[2,3,6,5,4],0]</action>
-      </production>
-      <documentation>
-	<usage>insert <xref linkend="nodetype"/> <xref
-	    linkend="expression"/> [namespace <xref linkend="expression"/>] <xref linkend='loc'/><xref
-	    linkend="xpath"/>
+      <documentation sections="manipulation">
+	<usage>insert <xref linkend="nodetype"/> <xref linkend="expression"/> [namespace <xref linkend="expression"/>] <xref linkend="loc"/><xref linkend="xpath"/>
 	</usage>
+	<shortdesc>create a node in on a given target location</shortdesc>
 	<description>
 	  <para>
 	    Works just like xadd, except that the new node is attached
@@ -1166,50 +1906,42 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="xinsert_command" name="xinsert">
+    <rule id="xinsert_command" type="command" name="xinsert" inline="yes">
       <aliases>
 	<alias name="xadd"/>
       </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="nodetype"/>
 	<ruleref ref="expression"/>
+	<ruleref ref="namespace" rep="?"/>
 	<ruleref ref="loc"/>
 	<ruleref ref="xpath"/>
-	<action>[\&amp;XML::XSH::Functions::insert,@item[2,3,5,4],undef,1]</action>
+	<action>[\&amp;XML::XSH::Functions::insert,@item[3,4,7,6],$item[5][0],1]</action>
       </production>
-      <production>
-	<selfref/>
-	<ruleref ref="nodetype"/>
-	<ruleref ref="expression"/>
-	<ruleref ref="namespace"/>
-	<ruleref ref="loc"/>
-	<ruleref ref="xpath"/>
-	<action>[\&amp;XML::XSH::Functions::insert,@item[2,3,6,5,4],1]</action>
-      </production>
-      <documentation>
-	<usage>xinsert <xref linkend="nodetype"/> <xref
-	    linkend="expression"/> [namespace <xref linkend="expression"/>] <xref linkend='loc'/><xref
-	    linkend="xpath"/>
+      <documentation sections="manipulation">
+	<usage>xinsert <xref linkend="nodetype"/> <xref linkend="expression"/> [namespace <xref linkend="expression"/>] <xref linkend="loc"/><xref linkend="xpath"/>
 	</usage>
+	<shortdesc>create nodes on all target locations</shortdesc>
 	<description>
 	  <para>
-	    Use the <xref linkend='expression'/> to create a new node of a given
-	    <xref linkend='nodetype'/> in the <xref linkend='loc'/> relative to the given
-	    <xref linkend='xpath'/>.
+	    Use the <xref linkend="expression"/> to create a new node of a given
+	    <xref linkend="nodetype"/> in the <xref linkend="loc"/> relative to the given
+	    <xref linkend="xpath"/>.
 	  </para>
 	  <para>
-	    For element nodes, the format of the <xref
-	      linkend='expression'/> should look like "&lt;element-name
-	    att-name='attvalue' ...&gt;".  The `&lt;' and `&gt;'
-	    characters are optional. If no attributes are used, the
-	    expression may simply consist the element name. Note, that
-	    in the first case, the quotes are required since the
-	    expression contains spaces.
+	    For element nodes, the format of the <xref linkend="expression"/> should look like
+	      &quot;&lt;element-name att-name='attvalue' ...&gt;&quot;.  The
+	      <literal>&lt;</literal> and <literal>&gt;</literal>
+	      characters are optional. If no attributes are used, the
+	      expression may simply consist the element name. Note,
+	      that in the first case, the quotes are required since
+	      the expression contains spaces.
 	  </para>
 	  <para>
 	    Attribute nodes use the following syntax:
-	    "att-name='attvalue' [...]".
+	    &quot;att-name='attvalue' [...]&quot;.
 	  </para>
 	  <para>
 	    For the other types of nodes (text, cdata, comments) the
@@ -1218,16 +1950,20 @@ sub new {
 	    characters as in any expression argument.
 	  </para>
 	  <para>
-	    The <xref linkend='loc'/> argument should be one of:
-	    `after', `before', `into' and `replace'. You may use `into'
-	    location also to attach an attribute to an element or to
-	    append some data to a text, cdata or comment node. Note
-	    also, that `after' and `before' locations may be used to
-	    append or prepend a string to a value of an existing
-	    attribute. In that case, attribute name is ignored.
+	    The <xref linkend="loc"/> argument should be one of:
+	    <literal>after</literal>, <literal>before</literal>,
+	    <literal>into</literal> and
+	    <literal>replace</literal>. You may use
+	    <literal>into</literal> location also to attach an
+	    attribute to an element or to append some data to a text,
+	    cdata or comment node. Note also, that
+	    <literal>after</literal> and <literal>before</literal>
+	    locations may be used to append or prepend a string to a
+	    value of an existing attribute. In that case, attribute
+	    name is ignored.
 	  </para>
 	  <para>
-	    The namespace <xref linkend='expression'/> is only valid for
+	    The namespace <xref linkend="expression"/> is only valid for
 	    elements and attributes and must evaluate to the namespace
 	    URI. In that case, the element or attribute name must have a
 	    prefix. The created node is associated with the given
@@ -1237,10 +1973,10 @@ sub new {
 	    <title>Append a new Hobbit element to the list of
 	      middle-earth creatures and name him Bilbo.</title>
 	    <code>
-	      xsh> xadd element "&lt;creature race='hobbit' manner='good'> \
-	      into /middle-earth/creatures
-	      xsh> xadd attribute "name='Bilbo'" \
-	      into /middle-earth/creatures/creature[@race='hobbit'][last()]
+	      xsh&gt; <userinput>xadd element &quot;&lt;creature race='hobbit' manner='good'&gt; \
+	      into /middle-earth/creatures</userinput>
+	      xsh&gt; <userinput>xadd attribute &quot;name='Bilbo'&quot; \
+	      into /middle-earth/creatures/creature[@race='hobbit'][last()]</userinput>
 	    </code>
 	  </example>
 	</description>
@@ -1251,24 +1987,26 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule id="nodetype" name="node-type">
+    <rule id="nodetype" name="node-type" type="argtype">
       <production>
-	<regexp>element|attribute|attributes|text|cdata|pi|comment|chunk</regexp>
+	<regexp>element|attribute|attributes|text|cdata|pi|comment|chunk|entity_reference</regexp>
       </production>
-      <documentation>
+      <documentation sections="argtypes manipulation">
 	<title>Node-type argument type</title>
+	<shortdesc>node type specification (such as element, attribute, etc.)</shortdesc>
 	<description>
 	  <para>
-	    One of: element, attribute, text, cdata, comment, chunk.  A
+	    One of: element, attribute, text, cdata, comment, chunk
+	    and (EXPERIMENTALLY!) entity_reference.  A
 	    chunk is a character string which forms a well-balanced
 	    peace of XML.
 	  </para>
 	  <example>
 	    <code>
 	      add element hobbit into //middle-earth/creatures;
-	      add attribute 'name="Bilbo"' into //middle-earth/creatures/hobbit[last()];
-	      add chunk '&lt;hobbit name="Frodo">A small guy from &lt;place>Shire&lt;/place>.&lt;/hobbit>' \
-	      into //middle-earth/creatures;
+	      add attribute 'name=&quot;Bilbo&quot;' into //middle-earth/creatures/hobbit[last()];
+	      add chunk '&lt;hobbit name=&quot;Frodo&quot;&gt;A small guy from &lt;place&gt;Shire&lt;/place&gt;.&lt;/hobbit&gt;' 
+	      <tab/>into //middle-earth/creatures;
 	    </code>
 	  </example>
 	</description>
@@ -1282,30 +2020,21 @@ sub new {
       </production>
     </rule>
     <rule id="loc" type="argtype" name="location">
-      <production><literal>after</literal></production>
-      <production><literal>before</literal></production>
-      <production><literal>to</literal>
-	<action>"as_child"</action>
+      <production><regexp>after\s</regexp>
+	<action>&quot;after&quot;</action>
+</production>
+      <production><regexp>before\s</regexp>
+	<action>&quot;before&quot;</action>
+</production>
+      <production><regexp>(to|into|as child( of)?)\s</regexp>
+	<action>&quot;as_child&quot;</action>
       </production>
-      <production><literal>into</literal>
-	<action>"as_child"</action>
+      <production><regexp>(replace|instead( of)?)\s</regexp>
+	<action>&quot;replace&quot;</action>
       </production>
-      <production><literal>as child of</literal>
-	<action>"as_child"</action>
-      </production>
-      <production><literal>as child</literal>
-	<action>"as_child"</action>
-      </production>
-      <production><literal>replace</literal></production>
-      <production><literal>instead of</literal>
-	<action>"replace"</action>
-      </production>
-      <production>
-	<literal>instead</literal>
-	<action>"replace"</action>
-      </production>
-      <documentation>
+      <documentation sections="argtypes manipulation">
 	<title>Location argument type</title>
+	<shortdesc>relative location specification (such as after, before, etc.)</shortdesc>
 	<description>
 	  <para>One of: 
 	    after, 
@@ -1316,20 +2045,21 @@ sub new {
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="move_command" name="move">
+    <rule id="move_command" type="command" name="move" inline="yes">
       <aliases>
 	<alias name="mv"/>
       </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="xpath"/>
 	<ruleref ref="loc"/>
 	<ruleref ref="xpath"/>
-	<action>[\&amp;XML::XSH::Functions::move,@item[2,4,3]]</action>
+	<action>[\&amp;XML::XSH::Functions::move,@item[3,5,4]]</action>
       </production>
-      <documentation>
-	<usage>move <xref linkend="xpath"/> <xref linkend="loc"/> <xref
-	    linkend="xpath"/></usage>
+      <documentation sections="manipulation">
+	<usage>move <xref linkend="xpath"/> <xref linkend="loc"/> <xref linkend="xpath"/></usage>
+	<shortdesc>move nodes (in the one-to-one mode)</shortdesc>
 	<description>
 	  <para>Like copy, except that move removes the source nodes
 	    after a succesfull copy. See copy for more detail.</para>
@@ -1342,20 +2072,21 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="xmove_command" name="xmove_command">
+    <rule id="xmove_command" type="command" name="xmove" inline="yes">
       <aliases>
 	<alias name="xmv"/>
       </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="xpath"/>
 	<ruleref ref="loc"/>
 	<ruleref ref="xpath"/>
-	<action>[\&amp;XML::XSH::Functions::move,@item[2,4,3],1]</action>
+	<action>[\&amp;XML::XSH::Functions::move,@item[3,5,4],1]</action>
       </production>
-      <documentation>
-	<usage>xmove <xref linkend="xpath"/> <xref linkend="loc"/> <xref
-	    linkend="xpath"/></usage>
+      <documentation sections="manipulation">
+	<usage>xmove <xref linkend="xpath"/> <xref linkend="loc"/> <xref linkend="xpath"/></usage>
+	<shortdesc>move nodes (in the all-to-every mode)</shortdesc>
 	<description>
 	  <para>Like xcopy, except that xmove removes the source nodes
 	    after a succesfull copy. See copy for more detail.</para>
@@ -1368,24 +2099,25 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="clone_command" name="clone">
+    <rule id="clone_command" type="command" name="clone" inline="yes">
       <aliases>
 	<alias name="dup"/>
       </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="id_or_var"/>
 	<regexp>\s*=\s*</regexp>
 	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::clone,@item[2,4]]</action>
+	<action>[\&amp;XML::XSH::Functions::clone,@item[3,5]]</action>
       </production>
-      <documentation>
-	<usage>clone <xref linkend='ID'/>=<xref linkend='ID'/></usage>
+      <documentation sections="manipulation documents">
+	<usage>clone <xref linkend="ID"/>=<xref linkend="ID"/></usage>
+	<shortdesc>clone a given document</shortdesc>
 	<description>
 	  <para>
-	    Make a copy of the document identified by the <xref
-	      linkend='ID'/> following the equal sign assigning it the
-	    identifier of the first <xref linkend='ID'/>.
+	    Make a copy of the document identified by the <xref linkend="ID"/> following the equal sign assigning it the
+	    identifier of the first <xref linkend="ID"/>.
 	  </para>
 	</description>
 	<see-also>
@@ -1396,9 +2128,9 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="list_command" name="list">
+    <rule id="list_command" type="command" name="ls" inline="yes">
       <aliases>
-	<alias name="ls"/>
+	<alias name="list"/>
       </aliases>
       <production>
 	<selfref/>
@@ -1415,16 +2147,25 @@ sub new {
 	<selfref/>
 	<action>[\&amp;XML::XSH::Functions::list,[undef,'.'],1]</action>
       </production>
-      <documentation>
+      <documentation sections="navigation information">
 	<usage>list <xref linkend="xpath"/> [<xref linkend="expression"/>]</usage>
+	<shortdesc>list given part of the document as XML</shortdesc>
 	<description>
 	  <para>
 	    List the XML representation of all nodes matching <xref
-	      linkend='xpath'/>. The optional expression argument may be
-	    provided to specify the depth of XML tree listing. If
-	    negative, the tree will be listed to arbitrary depth.
-	    Unless in quiet mode, this command prints number of nodes
-	    matched on stderr.	   
+	      linkend="xpath"/>. The optional <xref
+	      linkend="expression"/> argument may be provided to
+	      specify the depth of XML tree listing. If negative, the
+	      tree will be listed to unlimited depth.  If the <xref
+	      linkend="expression"/> results in the word
+	      <literal>fold</literal>, elements marked with the <xref
+	      linkend="fold_command"/> command are folded, i.e. listed
+	      only to a certain depth (this feature is still
+	      EXPERIMENTAL!).
+	  </para>
+	  <para>
+	    Unless in quiet mode, this command prints also number of
+	    nodes matched on stderr.
 	  </para>
 	  <para>
 	    If the <xref linkend="xpath"/> parameter is omitted,
@@ -1433,85 +2174,84 @@ sub new {
 	</description>
 	<see-also>
 	  <ruleref ref="count_command"/>
+	  <ruleref ref="fold_command"/>
+	  <ruleref ref="unfold_command"/>
 	</see-also>
       </documentation>    
     </rule>
-    <rule type='command' id="count_command" name="count">
+    <rule id="count_command" type="command" name="count" inline="yes">
+      <aliases>
+	<alias name="print_value"/>
+	<alias name="get"/>
+      </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="xpath"/>
-	<action>[\&amp;XML::XSH::Functions::print_count,$item[2]]</action>
+	<action>[\&amp;XML::XSH::Functions::print_count,$item[3]]</action>
       </production>
-      <documentation>
+      <documentation sections="information">
 	<usage>count <xref linkend="xpath"/></usage>
+	<shortdesc>calculate given XPath expression and enumerate node-lists</shortdesc>
 	<description>
 	  <para>
-	    Calculate the given <xref linkend='xpath'/> expression. If
+	    Calculate the given <xref linkend="xpath"/> expression. If
 	    the result is a node-list, return number of nodes in the
-	    node-list.  If the <xref linkend='xpath'/> results in a
+	    node-list.  If the <xref linkend="xpath"/> results in a
 	    boolean, numeric or literal value, return the value.
-	  </para>
-	  <para>WARNING: Evaluation of <xref linkend='xpath'/> is done
-	    by means of XML::LibXML library. If the expression is not a
-	    valid XPath expression, the library in its present version
-	    causes segmentation fault (unless patched). This may result
-	    in loss of any unsaved data opened in XSH. I've sent a patch
-	    to the author of XML::LibXML port and he approved it. Let's
-	    see if it appears in the next version and when that will be
-	    released.
 	  </para>
 	</description>
       </documentation>
     </rule>
     <rule id="perl_code" type="argtype" name="perl-code">
       <production>
-	<directive type="perl_codeblock"></directive>
+	<directive type="perl_codeblock"/>
       </production>
       <production>
 	<ruleref ref="perl_expression"/>
       </production>
-      <documentation>
+      <documentation sections="argtypes binding">
 	<title>Perl-code argument type</title>
+	<shortdesc>in-line code in Perl programming language</shortdesc>
 	<description>
 	  <para>
 	    A block of perl code enclosed in curly brackets or an
 	    expression which interpolates to a perl
 	    expression. Variables defined in XSH are visible in perl
-	    code as well. Since XSH redirects output to the terminal,
-	    you cannot simply use perl print function for output if you
-	    want to filter the result with a shell command. Instead use
-	    predefined perl routine `echo ...'  which is equivalent to
-	    `print $::OUT ...'. The $::OUT perl-variable stores the
-	    referenc to the terminal file handle.
+	    code as well. Since, in the interactive mode, XSH
+	    redirects output to the terminal, you cannot simply use
+	    perl print function for output if you want to filter the
+	    result with a shell command. Instead use predefined perl
+	    routine <literal>echo ...</literal> which is equivalent to
+	    <literal>print $::OUT ...</literal>. The $::OUT
+	    perl-variable stores the referenc to the terminal file
+	    handle.
 	  </para>
 	  <example>
 	    <code>
-	      $i="foo";
-
-	      eval { echo "$i-bar\n"; } # prints foo-bar
-
-	      eval 'echo "\$i-bar\n";'  # exactly the same as above
-
-	      eval 'echo "$i-bar\n";'   # prints foo-bar too, but $i is
-	      # interpolated by XSH, so perl
-	      # actually evaluates
-	      #  echo "foo-bar\n";
+	      xsh&gt; <userinput>$i=&quot;foo&quot;;</userinput>
+	      xsh&gt; <userinput>eval { echo &quot;$i-bar\n&quot;; }</userinput> # prints foo-bar
+	      xsh&gt; <userinput>eval 'echo &quot;\$i-bar\n&quot;;'</userinput>  # exactly the same as above
+	      xsh&gt; <userinput>eval 'echo &quot;$i-bar\n&quot;;'</userinput>   # prints foo-bar too, but $i is
+	      <tab count="2"/># interpolated by XSH. Perl actually evaluates echo &quot;foo-bar\n&quot;;
 	    </code>
 	  </example>
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="eval_command" name="eval">
+    <rule id="eval_command" type="command" name="perl" inline="yes">
       <aliases>
-	<alias name="perl"/>
+	<alias name="eval"/>
       </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="perl_code"/>
-	<action>[\&amp;XML::XSH::Functions::print_eval,$item[2]]</action>
+	<action>[\&amp;XML::XSH::Functions::print_eval,$item[3]]</action>
       </production>
-      <documentation>
+      <documentation sections="binding">
 	<usage>eval <xref linkend="perl_code"/></usage>
+	<shortdesc>evaluate in-line Perl code</shortdesc>
 	<description>
 	  <para>Evaluate the given perl expression and print the return value.</para>
 	</description>
@@ -1520,7 +2260,7 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="prune_command" name="remove">
+    <rule id="prune_command" type="command" name="remove" inline="yes">
       <aliases>
 	<alias name="rm"/>
 	<alias name="prune"/>
@@ -1529,58 +2269,97 @@ sub new {
       </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="xpath"/>
-	<action>[\&amp;XML::XSH::Functions::prune,$item[2]]</action>
+	<action>[\&amp;XML::XSH::Functions::prune,$item[3]]</action>
       </production>
-      <documentation>
+      <documentation sections="manipulation">
 	<usage>remove <xref linkend="xpath"/></usage>
+	<shortdesc>remove given nodes</shortdesc>
 	<description>
-	  <para>Remove all nodes matching <xref
-	      linkend='xpath'/>.</para>
+	  <para>Remove all nodes matching <xref linkend="xpath"/>.</para>
 	  <example>
 	    <title>Get rid of all evil creatures.</title>
-	    <code>xsh> del //creature[@manner='evil']</code>
+	    <code>xsh&gt; <userinput>del //creature[@manner='evil']</userinput></code>
 	  </example>
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="print_command" name="print">
+    <rule id="print_command" type="command" name="print" inline="yes">
       <aliases>
 	<alias name="echo"/>
       </aliases>
       <production>
 	<selfref/>
-	<ruleref ref="expressions"/>
-	<action>[\&amp;XML::XSH::Functions::echo,@{$item[2]}]</action>
+	<directive type="commit"/>
+	<ruleref ref="expression" rep="s?"/>
+	<action>[\&amp;XML::XSH::Functions::echo,@{$item[3]}]</action>
       </production>
-      <production>
-	<selfref/>
-	<action>[\&amp;XML::XSH::Functions::echo]</action>
-      </production>
-      <documentation>
+      <documentation sections="information">
 	<usage>print <xref linkend="expression"/> [<xref linkend="expression"/> ...]</usage>
+	<shortdesc>print given stuff on standard console output</shortdesc>
 	<description>
 	  <para>Interpolate and print given expression(s).</para>
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="map_command" name="map">
+    <rule id="sort_command" type="command" name="sort" inline="yes">
+      <production>
+	<selfref/>
+	<directive type="commit"/>
+	<ruleref ref="block"/>
+	<ruleref ref="block"/>
+	<ruleref ref="perl_code"/>
+	<ruleref ref="nodelistvariable"/>
+	<action>[\&amp;XML::XSH::Functions::perlsort,@item[3..6]]</action>
+      </production>
+      <documentation>
+	<usage>sort <xref linkend="block"/> <xref linkend="block"/> <xref linkend="perl_code"/> %<xref linkend="ID"/></usage>
+	<shortdesc>sort given node-list using xsh and perl commands</shortdesc>
+	<description>
+	  <para>
+	    EXPERIMENTAL! This command is not yet guaranteed to remain in the 
+	    future releases.
+	  </para>
+	  <para>
+	    This command may be used to sort the node-list stored in
+	    the node-list variable <xref linkend="ID"/>. On each
+	    comparizon, first the two <xref linkend="block"/> are
+	    evaluated, each in a context of one of the nodes to
+	    compare. These <xref linkend="block"/> are supposed to
+	    prepair any variables needed for later order comparizon in
+	    the <xref linkend="perl_code"/>.  The nodes to be compared
+	    are available in %a and %b node-lists. It is the <xref linkend="perl_code"/> that is responsible for deciding
+	    which node comes first. Therefore it should return either
+	    -1, 0, or 1.
+	  </para>
+	  <example>
+	    <title>Sort creatures by name</title>
+	    <code>xsh&gt; <userinput>%c=//creatures</userinput>
+	      xsh&gt; <userinput>sort { $a=string(@name) }{ $b=string(@name) }{ $a cmp $b } %c</userinput>
+	      xsh&gt; <userinput>ls %c/@name</userinput></code>
+	  </example>
+	</description>
+      </documentation>
+    </rule>
+    <rule id="map_command" type="command" name="map" inline="yes">
       <aliases>
 	<alias name="sed"/>
       </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="perl_code"/>
 	<ruleref ref="xpath"/>
-	<action>[\&amp;XML::XSH::Functions::perlmap,@item[3,2]]</action>
+	<action>[\&amp;XML::XSH::Functions::perlmap,@item[4,3]]</action>
       </production>
-      <documentation>
-	<usage>map <xref linkend="perl_code"/> <xref
-	    linkend="xpath"/></usage>
+      <documentation sections="binding">
+	<usage>map <xref linkend="perl_code"/> <xref linkend="xpath"/></usage>
+	<shortdesc>quickly rename/modify nodes with in-line Perl code</shortdesc>
 	<description>
 	  <para>
-	    Each of the nodes matching <xref linkend='xpath'/> is
-	    processed with the <xref linkend='perl_code'/> in the
+	    Each of the nodes matching <xref linkend="xpath"/> is
+	    processed with the <xref linkend="perl_code"/> in the
 	    following way: if the node is an element, its name is
 	    processed, if it is an attribute, its value is used, if it
 	    is a cdata section, text node, comment or processing
@@ -1590,120 +2369,130 @@ sub new {
 	  </para>
 	  <example>
 	    <title>Renames all hobbits to halflings</title>
-	    <code>xsh> map $_='halfling' //hobbit</code>
+	    <code>xsh&gt; <userinput>map $_='halfling' //hobbit</userinput></code>
 	  </example>
 	  <example>
 	    <title>Capitalises all hobbit names</title>
-	    <code>xsh> map { $_=ucfirst($_) } //hobbit/@name</code>	  
+	    <code>xsh&gt; <userinput>map { $_=ucfirst($_) } //hobbit/@name</userinput></code>	  
 	  </example>
 	  <example>
 	    <title>Changes goblins to orcs in all hobbit tales.</title>
-	    <code>xsh> on s/goblin/orc/gi //hobbit/tale/text()</code>
+	    <code>xsh&gt; <userinput>on s/goblin/orc/gi //hobbit/tale/text()</userinput></code>
 	  </example>
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="close_command" name="close">
+    <rule id="close_command" type="command" name="close" inline="yes">
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::close_doc,$item[2]]</action>
+	<action>[\&amp;XML::XSH::Functions::close_doc,$item[3]]</action>
       </production>
-      <documentation>
-	<usage>close <xref linkend='ID'/></usage>
+      <documentation sections="documents">
+	<usage>close <xref linkend="ID"/></usage>
+	<shortdesc>close document (do not save it, though)</shortdesc>
 	<description>
 	  <para>
-	    Close the document identified by <xref linkend='ID'/>, removing its
+	    Close the document identified by <xref linkend="ID"/>, removing its
 	    parse-tree from memory.
 	  </para>
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="select_command" name="select">
+    <rule id="select_command" type="command" name="select" inline="yes">
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::set_local_xpath,[$item[2],"/"]]</action>
+	<action>[\&amp;XML::XSH::Functions::set_local_xpath,[$item[3],&quot;/&quot;]]</action>
       </production>
-      <documentation>
-	<usage>select <xref linkend='ID'/></usage>
+      <documentation sections="documents navigation">
+	<usage>select <xref linkend="ID"/></usage>
+	<shortdesc>make given document the current one</shortdesc>
 	<description>
 	  <para>
-	    Make <xref linkend='ID'/> the document identifier to be used in the next
+	    Make <xref linkend="ID"/> the document identifier to be used in the next
 	    xpath evaluation without identifier prefix.
 	  </para>
 	  <example>
 	    <code>
-	      xsh> a=mydoc1.xml       # opens and selects a
-	      xsh> list /             # lists a
-	      xsh> b=mydoc2.xml       # opens and selects b
-	      xsh> list /             # lists b
-	      xsh> list a:/           # lists and selects a
-	      xsh> select b           # does nothing except selecting b
-	      xsh> list /             # lists b
+	      xsh&gt; <userinput>a=mydoc1.xml</userinput>       # opens and selects a
+	      xsh&gt; <userinput>list /</userinput>             # lists a
+	      xsh&gt; <userinput>b=mydoc2.xml</userinput>       # opens and selects b
+	      xsh&gt; <userinput>list /</userinput>             # lists b
+	      xsh&gt; <userinput>list a:/</userinput>           # lists and selects a
+	      xsh&gt; <userinput>select b</userinput>           # does nothing except selecting b
+	      xsh&gt; <userinput>list /</userinput>             # lists b
 	    </code>
 	  </example>
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="open_command" name="open">
+    <rule id="open_command" type="command" name="open" inline="yes">
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="id_or_var"/>
 	<regexp>\s*=\s*</regexp>
 	<ruleref ref="filename"/>
-	<action>[\&amp;XML::XSH::Functions::open_doc,@item[2,4]]</action>
+	<action>[\&amp;XML::XSH::Functions::open_doc,@item[3,5]]</action>
       </production>
       <production>
 	<ruleref ref="ID"/>
 	<regexp>\s*=\s*</regexp>
+	<directive type="commit"/>
 	<ruleref ref="filename"/>
-	<action>[\&amp;XML::XSH::Functions::open_doc,@item[1,3]]</action>
+	<action>[\&amp;XML::XSH::Functions::open_doc,@item[1,4]]</action>
       </production>
-      <documentation>
-	<usage>[open] <xref linkend='ID'/>=<xref
-	    linkend='filename'/></usage>
+      <documentation sections="documents">
+	<usage>[open] <xref linkend="ID"/>=<xref linkend="filename"/></usage>
+	<shortdesc>load an XML document form a file or URI</shortdesc>
 	<description>
 	  <para>
-	    Open a new document assigning it a symbolic name of <xref linkend='ID'/>.
-	    To identify the document, use simply <xref linkend='ID'/> in commands like
+	    Open a new document assigning it a symbolic name of <xref linkend="ID"/>.
+	    To identify the document, use simply <xref linkend="ID"/> in commands like
 	    close, save, validate, dtd or enc. In commands which work on
-	    document nodes, use <xref linkend='ID'/>: prefix is XPath expressions to
+	    document nodes, use <xref linkend="ID"/>: prefix is XPath expressions to
 	    point the XPath into the document.
 	  </para>
 	  <example>
 	    <code>
-	      xsh> open x=mydoc.xml # open a document
+	      xsh&gt; <userinput>open x=mydoc.xml # open a document</userinput>
 
 	      # quote file name if it contains whitespace
-	      xsh> open y="document with a long name with spaces.xml"
+	      xsh&gt; <userinput>open y=&quot;document with a long name with spaces.xml&quot;</userinput>
 
 	      # you may omit the word open (I'm clever enough to find out).
-	      xsh> z=mybook.xml
+	      xsh&gt; <userinput>z=mybook.xml</userinput>
 
 	      # use z: prefix to identify the document opened with the
 	      # previous comand in an XPath expression.
-	      xsh> list z://chapter/title	    
+	      xsh&gt; <userinput>list z://chapter/title	    </userinput>
 	    </code>
 	  </example>
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="openhtml_command" name="open_HTML">
+    <rule id="openhtml_command" type="command" name="open-HTML" inline="yes">
+      <aliases>
+	<alias name="open_HTML"/>
+      </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="id_or_var"/>
 	<regexp>\s*=\s*</regexp>
 	<ruleref ref="filename"/>
-	<action>[\&amp;XML::XSH::Functions::open_doc,@item[2,4],'html']</action>
+	<action>[\&amp;XML::XSH::Functions::open_doc,@item[3,5],'html']</action>
       </production>
-      <documentation>
-	<usage>open_HTML <xref linkend='ID'/>=<xref
-	    linkend='filename'/></usage>
+      <documentation sections="documents">
+	<usage>open_HTML <xref linkend="ID"/>=<xref linkend="filename"/></usage>
+	<shortdesc>load an HTML document from a file or URI</shortdesc>
 	<description>
 	  <para>
 	    Open a new HTML document assigning it a symbolic name of
-	    <xref linkend='ID'/>. To save it as HTML, use save_HTML
+	    <xref linkend="ID"/>. To save it as HTML, use save_HTML
 	    command (use of just save or saveas would change it to
 	    XHTML without changing the DOCTYPE declaration).
 	  </para>
@@ -1714,23 +2503,25 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="openpipe_command" name="open_PIPE">
+    <rule id="openpipe_command" type="command" name="open-PIPE" inline="yes">
+      <aliases>
+	<alias name="open_PIPE"/>
+      </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="id_or_var"/>
 	<regexp>\s*=\s*</regexp>
 	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::open_doc,@item[2,4],'pipe']</action>
+	<action>[\&amp;XML::XSH::Functions::open_doc,@item[3,5],'pipe']</action>
       </production>
-      <documentation>
-	<usage>open_PIPE <xref linkend='ID'/>=<xref
-	    linkend='expression'/></usage>
+      <documentation sections="documents">
+	<usage>open_PIPE <xref linkend="ID"/>=<xref linkend="expression"/></usage>
+	<shortdesc>read a document piped by a system command</shortdesc>
 	<description>
 	  <para>
-	    Run the system command resluting from interpoation of the <xref
-	    linkend='expression'/> and parse its output as XML,
-	    associating the resulting DOM tree with the given <xref
-	    linkend="ID"/>.
+	    Run the system command resluting from interpoation of the <xref linkend="expression"/> and parse its output as XML,
+	    associating the resulting DOM tree with the given <xref linkend="ID"/>.
 	  </para>
 	</description>
 	<see-also>
@@ -1739,37 +2530,38 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="create_command" name="create">
+    <rule id="create_command" type="command" name="create" inline="yes">
       <aliases>
 	<alias name="new"/>
       </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="expression"/>
 	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::create_doc,@item[2,3]]</action>
+	<action>[\&amp;XML::XSH::Functions::create_doc,@item[3,4]]</action>
       </production>
-      <documentation>
-	<usage>create <xref linkend='ID'/> <xref
-	    linkend="expression"/></usage>
+      <documentation sections="documents">
+	<usage>create <xref linkend="ID"/> <xref linkend="expression"/></usage>
+	<shortdesc>make a new document from given XML fragment</shortdesc>
 	<description>
 	  <para>
-	    Create a new document using <xref linkend='expression'/> to
+	    Create a new document using <xref linkend="expression"/> to
 	    form the root element and associate it with the given
 	    identifier.
 	  </para>
 	  <example>
 	    <code>
-	      xsh> create t1 root
-	      xsh> ls /
-	      &lt;?xml version="1.0" encoding="utf-8"?>
-	      &lt;root/>
+	      xsh&gt; <userinput>create t1 root</userinput>
+	      xsh&gt; <userinput>ls /</userinput>
+	      &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+	      &lt;root/&gt;
 
-	      xsh> create t2 "&lt;root id='r0'>Just a &lt;b>test&lt;/b>&lt;/root>"
-	      xsh> ls /
-	      &lt;?xml version="1.0" encoding="utf-8"?>
-	      &lt;root id='r0'>Just a &lt;b>test&lt;/b>&lt;/root>
-	      xsh> files
+	      xsh&gt; <userinput>create t2 &quot;&lt;root id='r0'&gt;Just a &lt;b&gt;test&lt;/b&gt;&lt;/root&gt;&quot;</userinput>
+	      xsh&gt; <userinput>ls /</userinput>
+	      &lt;?xml version=&quot;1.0&quot; encoding=&quot;utf-8&quot;?&gt;
+	      &lt;root id='r0'&gt;Just a &lt;b&gt;test&lt;/b&gt;&lt;/root&gt;
+	      xsh&gt; <userinput>files</userinput>
 	      scratch = new_document.xml
 	      t1 = new_document1.xml
 	      t2 = new_document2.xml
@@ -1782,27 +2574,29 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="save_command" name="save">
+    <rule id="encoding_param">
       <production>
-	<selfref/>
-	<ruleref ref="expression"/>
 	<regexp>encoding\s</regexp>
 	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::save_as,$item[2],$item[4]]</action>
+	<action>$item[2]</action>
       </production>
+    </rule>
+    <rule id="save_command" type="command" name="save" inline="yes">
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::save_as,$item[2]]</action>
+	<ruleref ref="encoding_param" rep="?"/>
+	<action>[\&amp;XML::XSH::Functions::save_as,$item[3],@{$item[4]}]</action>
       </production>
-      <documentation>
-	<usage>save <xref linkend='ID'/> [encoding <xref
-	    linkend='enc_string'/>]</usage>
+      <documentation sections="documents">
+	<usage>save <xref linkend="ID"/> [encoding <xref linkend="enc_string"/>]</usage>
+	<shortdesc>save a document as XML</shortdesc>
 	<description>
 	  <para>
-	    Save the document identified by <xref linkend='ID'/> to its
-	    original XML file, possibly converting it from its original
-	    encoding to <xref linkend='enc_string'/>.
+	    Save the document identified by <xref linkend="ID"/> to its
+	    original XML file, optionally converting it from its original
+	    encoding to <xref linkend="enc_string"/>.
 	  </para>
 	</description>
 	<see-also>
@@ -1814,30 +2608,26 @@ sub new {
 	</see-also>
       </documentation>
     </rule>    
-    <rule type='command' id="savehtml_command" name="save_HTML">
+    <rule id="savehtml_command" type="command" name="save-HTML" inline="yes">
+      <aliases>
+	<alias name="save_HTML"/>
+      </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="expression"/>
 	<ruleref ref="filename"/>
-	<regexp>encoding\s</regexp>
-	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::save_as_html,@item[2,3,5]]</action>
+	<ruleref ref="encoding_param" rep="?"/>
+	<action>[\&amp;XML::XSH::Functions::save_as_html,@item[3,4],@{$item[5]}]</action>
       </production>
-      <production>
-	<selfref/>
-	<ruleref ref="expression"/>
-	<ruleref ref="filename"/>
-	<action>[\&amp;XML::XSH::Functions::save_as_html,@item[2,3]]</action>
-      </production>
-      <documentation>
-	<usage>save_HTML <xref linkend='ID'/> <xref linkend="filename"/> [encoding <xref
-	    linkend='enc_string'/>]</usage>
+      <documentation sections="documents">
+	<usage>save_HTML <xref linkend="ID"/> <xref linkend="filename"/> [encoding <xref linkend="enc_string"/>]</usage>
+	<shortdesc>store a document in a local file as HTML</shortdesc>
 	<description>
 	  <para>
-	    Save the document identified by <xref linkend='ID'/> as a
-	    HTML file named <xref linkend='filename'/>, possibly
-	    converting it from its original encoding to <xref
-	      linkend='enc_string'/> Note, that this does just
+	    Save the document identified by <xref linkend="ID"/> as a
+	    HTML file named <xref linkend="filename"/>, optionally
+	    converting it from its original encoding to <xref linkend="enc_string"/> Note, that this does just
 	    the character conversion, so you
 	    must specify the correct encoding in the META tag yourself.
 	  </para>
@@ -1849,30 +2639,27 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="saveas_command" name="saveas">
+    <rule id="saveas_command" type="command" name="saveas" inline="yes">
+      <aliases>
+	<alias name="save-as"/>
+	<alias name="save_as"/>
+      </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="expression"/>
 	<ruleref ref="filename"/>
-	<regexp>encoding\s</regexp>
-	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::save_as,@item[2,3,5]]</action>
+	<ruleref ref="encoding_param" rep="?"/>
+	<action>[\&amp;XML::XSH::Functions::save_as,@item[3,4],@{$item[5]}]</action>
       </production>
-      <production>
-	<selfref/>
-	<ruleref ref="expression"/>
-	<ruleref ref="filename"/>
-	<action>[\&amp;XML::XSH::Functions::save_as,@item[2,3]]</action>
-      </production>
-      <documentation>
-	<usage>saveas <xref linkend='ID'/> <xref linkend="filename"/> [encoding <xref
-	    linkend='enc_string'/>]</usage>
+      <documentation sections="documents">
+	<usage>saveas <xref linkend="ID"/> <xref linkend="filename"/> [encoding <xref linkend="enc_string"/>]</usage>
+	<shortdesc>store a document as a given file in XML format</shortdesc>
 	<description>
 	  <para>
-	    Save the document identified by <xref linkend='ID'/> as a
-	    XML file named <xref linkend='filename'/>, possibly
-	    converting it from its original encoding to <xref
-	      linkend='enc_string'/>.
+	    Save the document identified by <xref linkend="ID"/> as a
+	    XML file named <xref linkend="filename"/>, optionally
+	    converting it from its original encoding to <xref linkend="enc_string"/>.
 	  </para>
 	</description>
 	<see-also>
@@ -1885,18 +2672,66 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="list_dtd_command" name="dtd">
+    <rule id="savexinclude_command" type="command" name="save-xinclude" inline="yes">
+      <aliases>
+	<alias name="save_xinclude"/>
+      </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::list_dtd,$item[2]]</action>
+	<ruleref ref="encoding_param" rep="?"/>
+	<action>[\&amp;XML::XSH::Functions::save_xinclude,$item[3],@{$item[4]}]</action>
       </production>
+      <documentation sections="documents">
+	<usage>save_xinclude <xref linkend="ID"/> [encoding <xref linkend="enc_string"/>]</usage>
+	<shortdesc>save an XML document and all XIncluded parts separately</shortdesc>
+	<description>
+	  <para>
+	    Save the document identified by <xref linkend="ID"/> while
+	    saving all expanded XInclude sections to the original
+	    files (optionally converting it from its original encoding
+	    to <xref linkend="enc_string"/>).  Once expanded, sections
+	    included with XInclude mechanism cannot be normally
+	    distinguished from other parts of the DOM tree by any
+	    XPath expression or XSH command. Internally, however, they
+	    are marked with special DOM nodes. This command uses these
+	    nodes to find the sections and save them to their original
+	    documents while restoring the &lt;xi:include&gt; tags in
+	    the root document. More over, this command may be used to
+	    split the document to new fragments included back by means
+	    of XInclude, since all non-empty fragments containded
+	    within
+	  </para>
+	  <code>
+	    &lt;xi:include xmlns:xi='http://www.w3.org/2001/XInclude'
+   	    href='output-file'&gt;&lt;xi:include/&gt;
+	  </code>
+	  <para>
+	    elements are saved to separate files too, leaving only
+	    empty xi:include element in the root file.
+	  </para>
+	</description>
+	<see-also>
+	  <ruleref ref="save_command"/>
+	  <ruleref ref="savehtml_command"/>
+	  <ruleref ref="open_command"/>
+	  <ruleref ref="close_command"/>
+	  <ruleref ref="print_enc_command"/>
+	  <ruleref ref="files_command"/>
+	</see-also>
+      </documentation>
+    </rule>
+    <rule id="list_dtd_command" type="command" name="dtd" inline="yes">
       <production>
-	<selfref/>
-	<action>[\&amp;XML::XSH::Functions::list_dtd,undef]</action>
+	<selfref sep="no"/>
+	<directive type="commit"/>
+	<ruleref ref="optional_expression" rep="?"/>
+	<action>[\&amp;XML::XSH::Functions::list_dtd,@{$item[3]}]</action>
       </production>
-      <documentation>
-	<usage>dtd [<xref linkend='ID'/>]</usage>
+      <documentation sections="information">
+	<usage>dtd [<xref linkend="ID"/>]</usage>
+	<shortdesc>show document's DTD</shortdesc>
 	<description>
 	  <para>
 	    Print external or internal DTD for the given document.  If
@@ -1909,18 +2744,16 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="print_enc_command" name="print_enc_command">
+    <rule id="print_enc_command" type="command" name="enc" inline="yes">
       <production>
-	<selfref/>
-	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::print_enc,$item[2]]</action>
+	<selfref sep="no"/>
+	<directive type="commit"/>
+	<ruleref ref="optional_expression" rep="?"/>
+	<action>[\&amp;XML::XSH::Functions::print_enc,@{$item[3]}]</action>
       </production>
-      <production>
-	<selfref/>
-	<action>[\&amp;XML::XSH::Functions::print_enc,undef]</action>
-      </production>
-      <documentation>
-	<usage>enc [<xref linkend='ID'/>]</usage>
+      <documentation sections="information">
+	<usage>enc [<xref linkend="ID"/>]</usage>
+	<shortdesc>show document's original character encoding</shortdesc>
 	<description>
 	  <para>
 	    Print the original document encoding string.
@@ -1930,22 +2763,19 @@ sub new {
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="validate_command" name="validate">
+    <rule id="validate_command" type="command" name="validate" inline="yes">
       <production>
-	<selfref/>
-	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::validate_doc,$item[2]]</action>
+	<selfref sep="no"/>
+	<directive type="commit"/>
+	<ruleref ref="optional_expression" rep="?"/>
+	<action>[\&amp;XML::XSH::Functions::validate_doc,@{$item[3]}]</action>
       </production>
-      <production>
-	<selfref/>
-	<action>[\&amp;XML::XSH::Functions::validate_doc,undef]</action>
-      </production>
-      <documentation>
-	<usage>validate [<xref linkend='ID'/>]</usage>
+      <documentation sections="information">
+	<usage>validate [<xref linkend="ID"/>]</usage>
+	<shortdesc>validate a document against its DTD</shortdesc>
 	<description>
 	  <para>
-	    Try to validate the document identified with <xref
-	      linkend='ID'/> according to its DTD, report all validity
+	    Try to validate the document identified with <xref linkend="ID"/> according to its DTD, report all validity
 	    errors.  If no document identifier is given, the current
 	    document is used.
 	  </para>
@@ -1956,22 +2786,20 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="valid_command" name="valid">
+    <rule id="valid_command" type="command" name="valid" inline="yes">
       <production>
-	<selfref/>
-	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::valid_doc,$item[2]]</action>
+	<selfref sep="no"/>
+	<directive type="commit"/>
+	<ruleref ref="optional_expression" rep="?"/>
+	<action>[\&amp;XML::XSH::Functions::valid_doc,@{$item[3]}]</action>
       </production>
-      <production>
-	<selfref/>
-	<action>[\&amp;XML::XSH::Functions::valid_doc,undef]</action>
-      </production>
-      <documentation>
-	<usage>valid [<xref linkend='ID'/>]</usage>
+      <documentation sections="information">
+	<usage>valid [<xref linkend="ID"/>]</usage>
+	<shortdesc>check if the document is valid (according to its DTD)</shortdesc>
 	<description>
 	  <para>
-	    Check and report the validity of a document.  Prints "yes"
-	    if the document is valid and "no" otherwise.  If no document
+	    Check and report the validity of a document.  Prints &quot;yes&quot;
+	    if the document is valid and &quot;no&quot; otherwise.  If no document
 	    identifier is given, the current document is used.
 	  </para>
 	</description>
@@ -1981,24 +2809,22 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="exit_command" name="exit">
+    <rule id="exit_command" type="command" name="exit" inline="yes">
       <aliases>
 	<alias name="quit"/>
       </aliases>
       <production>
-	<selfref/>
-	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::quit,$item[2]]</action>
+	<selfref sep="no"/>
+	<directive type="commit"/>
+	<ruleref ref="optional_expression" rep="?"/>
+	<action>[\&amp;XML::XSH::Functions::quit,@{$item[3]}]</action>
       </production>
-      <production>
-	<selfref/>
-	<action>[\&amp;XML::XSH::Functions::quit,0]</action>
-      </production>
-      <documentation>
-	<usage>exit [<xref linkend='expression'/>]</usage>
+      <documentation sections="flow">
+	<usage>exit [<xref linkend="expression"/>]</usage>
+	<shortdesc>exit XSH shell</shortdesc>
 	<description>
 	  <para>
-	    Exit xsh immediately, optionaly with the exit-code
+	    Exit xsh immediately, optionally with the exit-code
 	    resulting from the given expression.
 	  </para>
 	  <para>
@@ -2007,28 +2833,30 @@ sub new {
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="process_xinclude_command" name="process_xinclude">
+    <rule id="process_xinclude_command" type="command" name="process-xinclude" inline="yes">
       <aliases>
+	<alias name="process_xinclude"/>
+	<alias name="process-xincludes"/>
 	<alias name="process_xincludes"/>
 	<alias name="xinclude"/>
 	<alias name="xincludes"/>
 	<alias name="load_xincludes"/>
+	<alias name="load-xincludes"/>
 	<alias name="load_xinclude"/>
+	<alias name="load-xinclude"/>
       </aliases>
       <production>
-	<selfref/>
-	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::process_xinclude,$item[2]]</action>
+	<selfref sep="no"/>
+	<directive type="commit"/>	
+	<ruleref ref="optional_expression" rep="?"/>
+	<action>[\&amp;XML::XSH::Functions::process_xinclude,@{$item[3]}]</action>
       </production>
-      <production>
-	<selfref/>
-	<action>[\&amp;XML::XSH::Functions::process_xinclude,undef]</action>
-      </production>
-      <documentation>
-	<usage>process_xinclude [<xref linkend='ID'/>]</usage>
+      <documentation sections="manipulation documents">
+	<usage>process_xinclude [<xref linkend="ID"/>]</usage>
+	<shortdesc>load and insert XInclude sections</shortdesc>
 	<description>
 	  <para>
-	    Process any xinclude tags in the document <xref linkend='ID'/>.
+	    Process any xinclude tags in the document <xref linkend="ID"/>.
 	  </para>
 	</description>
 	<see-also>
@@ -2036,21 +2864,19 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule id="chxpath_command" type="command" name="cd">
+    <rule id="chxpath_command" type="command" name="cd" inline="yes">
       <aliases>
 	<alias name="chxpath"/>
       </aliases>
       <production>
-	<selfref/>
-	<ruleref ref="xpath"/>
-	<action>[\&amp;XML::XSH::Functions::set_local_xpath,$item[2]]</action>
+	<selfref sep="no"/>
+	<directive type="commit"/>
+	<ruleref ref="optional_xpath" rep="?"/>
+	<action>[\&amp;XML::XSH::Functions::set_local_xpath,@{$item[3]}]</action>
       </production>
-      <production>
-	<selfref/>
-	<action>[\&amp;XML::XSH::Functions::set_local_xpath,undef]</action>
-      </production>
-      <documentation>
+      <documentation sections="navigation">
 	<usage>cd [<xref linkend="xpath"/>]</usage>
+	<shortdesc>change current context node</shortdesc>
 	<description>
 	  <para>Change current context node (and current document) to
 	    the first node matching the given <xref linkend="xpath"/>
@@ -2059,16 +2885,17 @@ sub new {
 	</description>
       </documentation>
     </rule>
-    <rule id="pwd_command" type="command" name="pwd">
+    <rule id="pwd_command" type="command" name="pwd" inline="yes">
       <production>
 	<selfref/>
 	<action>[\&amp;XML::XSH::Functions::print_pwd]</action>
       </production>
-      <documentation>
+      <documentation sections="navigation information">
 	<usage>pwd</usage>
+	<shortdesc>show current context node location (as a cannonical XPath)</shortdesc>
 	<description>
-	  <para>Print XPath leading to the current context node.
-	    This is equivalent to `locate .'.
+	  <para>Print XPath leading to the current context node.  This
+	    is equivalent to <literal>locate .</literal>.
 	  </para>
 	</description>
 	<see-also>
@@ -2076,18 +2903,16 @@ sub new {
 	</see-also>
       </documentation>
     </rule>    
-    <rule id="locate_command" type="command" name="locate">
+    <rule id="locate_command" type="command" name="locate" inline="yes">
       <production>
-	<selfref/>
-	<ruleref ref="xpath"/>
-	<action>[\&amp;XML::XSH::Functions::locate,$item[2]]</action>
+	<selfref sep="no"/>
+	<directive type="commit"/>
+	<ruleref ref="optional_xpath" rep="?"/>
+	<action>[\&amp;XML::XSH::Functions::locate,@{$item[3]}]</action>
       </production>
-      <production>
-	<selfref/>
-	<action>[\&amp;XML::XSH::Functions::locate,undef]</action>
-      </production>
-      <documentation>
+      <documentation sections="navigation information">
 	<usage>locate <xref linkend="xpath"/></usage>
+	<shortdesc>show given node location (as a cannonical XPath)</shortdesc>
 	<description>
 	  <para>Print canonical XPaths leading to nodes matched by
 	    the <xref linkend="xpath"/> given.</para>
@@ -2097,20 +2922,17 @@ sub new {
 	</see-also>
       </documentation>
     </rule>    
-    <rule id="xupdate_command" type="command" name="xupdate">
+    <rule id="xupdate_command" type="command" name="xupdate" inline="yes">
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="expression"/>
-	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::xupdate,$item[2],$item[3]]</action>
+	<ruleref ref="expression" rep="?"/>
+	<action>[\&amp;XML::XSH::Functions::xupdate,$item[3],@{$item[4]}]</action>
       </production>
-      <production>
-	<selfref/>
-	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::xupdate,$item[2],undef]</action>
-      </production>
-      <documentation>
+      <documentation sections="manipulation">
 	<usage>xupdate <xref linkend="ID"/> [<xref linkend="ID"/>]</usage>
+	<shortdesc>apply XUpdate commands on a document</shortdesc>
 	<description>
 	  <para>Modify the current document or the document specified
 	    by the second <xref linkend="ID"/> argument according to
@@ -2120,11 +2942,11 @@ sub new {
 	  </para>
 	  <para>
 	    XUpdate langauge is described in XUpdate Working Draft at
-            http://www.xmldb.org/xupdate/xupdate-wd.html.	    	    
+            <ulink url="http://www.xmldb.org/xupdate/xupdate-wd.html">http://www.xmldb.org/xupdate/xupdate-wd.html</ulink>.	    	    
 	  </para>
 	  <para>XUpdate output can be generated for example by
             Python xmldiff utility from
-	    http://www.logilab.org/xmldiff/. Unfortunatelly,
+	    <ulink url="http://www.logilab.org/xmldiff/">http://www.logilab.org/xmldiff/</ulink>. Unfortunatelly,
 	    there are few bugs (or, as I tend to say In case of
             Python, white-space problems) in their code, so its 
             XUpdate output is not always correct.
@@ -2132,28 +2954,33 @@ sub new {
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="verbose" name="verbose">
+    <rule id="verbose" type="command" name="verbose" inline="yes">
       <production>
 	<selfref/>
 	<action>[\&amp;XML::XSH::Functions::set_opt_q,0]</action>
       </production>
-      <documentation>
+      <documentation sections="configuration">
 	<usage>verbose</usage>
+	<shortdesc>make XSH print many messages</shortdesc>
 	<description>
-	  <para>Turn on verbose messages.</para>
+	  <para>Turn on verbose messages (default).</para>
 	</description>
 	<see-also>
 	  <ruleref ref="quiet"/>
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="test_mode" name="test-mode">
+    <rule id="test_mode" type="command" name="test-mode" inline="yes">
+      <aliases>
+	<alias name="test_mode"/>
+      </aliases>
       <production>
 	<selfref/>
-	<action>["test-mode"]</action>
+	<action>[&quot;test-mode&quot;]</action>
       </production>
-      <documentation>
+      <documentation sections="flow configuration">
 	<usage>test-mode</usage>
+	<shortdesc>do not execute any command, only check the syntax</shortdesc>
 	<description>
 	  <para>
 	    Switch into test mode in which no commands are actually
@@ -2165,13 +2992,17 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="run_mode" name="run-mode">
+    <rule id="run_mode" type="command" name="run-mode" inline="yes">
+      <aliases>
+	<alias name="run_mode"/>
+      </aliases>
       <production>
 	<selfref/>
-	<action>["run-mode"]</action>
+	<action>[&quot;run-mode&quot;]</action>
       </production>
-      <documentation>
+      <documentation sections="flow configuration">
 	<usage>run-mode</usage>
+	<shortdesc>switch into normal execution mode (quit <xref linkend="test_mode"/>)</shortdesc>
 	<description>
 	  <para>
 	    Switch into normal XSH mode in which all commands are
@@ -2183,13 +3014,14 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="debug" name="debug">
+    <rule id="debug" type="command" name="debug" inline="yes">
       <production>
 	<selfref/>
 	<action>[\&amp;XML::XSH::Functions::set_opt_d,1]</action>
       </production>
-      <documentation>
+      <documentation sections="configuration">
 	<usage>debug</usage>
+	<shortdesc>display many annoying debugging messages</shortdesc>
 	<description>
 	  <para>Turn on debugging messages.</para>
 	</description>
@@ -2198,13 +3030,14 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="nodebug" name="nodebug">
+    <rule id="nodebug" type="command" name="nodebug" inline="yes">
       <production>
 	<selfref/>
 	<action>[\&amp;XML::XSH::Functions::set_opt_d,0]</action>
       </production>
-      <documentation>
+      <documentation sections="configuration">
 	<usage>nodebug</usage>
+	<shortdesc>turn off debugging messages</shortdesc>
 	<description>
 	  <para>Turn off debugging messages.</para>
 	</description>
@@ -2213,13 +3046,14 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="version" name="version">
+    <rule id="version" type="command" name="version" inline="yes">
       <production>
 	<selfref/>
 	<action>[\&amp;XML::XSH::Functions::print_version,0]</action>
       </production>
-      <documentation>
+      <documentation sections="information">
 	<usage>version</usage>
+	<shortdesc>show version information</shortdesc>
 	<description>
 	  <para>
 	    Prints program version as well as versions of
@@ -2229,14 +3063,16 @@ sub new {
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="validation" name="validation">
+    <rule id="validation" type="command" name="validation" inline="yes">
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::set_validation,$item[2]]</action>
+	<action>[\&amp;XML::XSH::Functions::set_validation,$item[3]]</action>
       </production>
-      <documentation>
+      <documentation sections="configuration">
 	<usage>validation <xref linkend="expression"/></usage>
+	<shortdesc>turn on/off validation in XML parser</shortdesc>
 	<description>
 	  <para>
 	    Turn on validation during the parse process if the
@@ -2246,14 +3082,45 @@ sub new {
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="parser_expands_entities" name="parser_expands_entities">
+    <rule id="recovering" type="command" name="recovering" inline="yes">
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::set_expand_entities,$item[2]]</action>
+	<action>[\&amp;XML::XSH::Functions::set_recovering,$item[3]]</action>
       </production>
-      <documentation>
+      <documentation sections="configuration">
+	<usage>recovering <xref linkend="expression"/></usage>
+	<shortdesc>turn on/off parser's ability to fix broken XML</shortdesc>
+	<description>
+	  <para>
+	    Turn on recovering parser mode if the
+	    <xref linkend="expression"/> is non-zero or off otherwise.
+	    Defaults to off. Note, that the in the recovering mode,
+            validation is not performed by the parser even if
+	    the validation flag is on and that recovering mode flag
+            only influences parsing of XML documents (not HTML).
+	  </para>
+	  <para>The recover mode helps to efficiently recover
+	  documents that are almost well-formed. This for example
+	  includes documents without a close tag for the document
+	  element (or any other element inside the document).</para>
+	</description>
+      </documentation>
+    </rule>
+    <rule id="parser_expands_entities" type="command" name="parser-expands-entities" inline="yes">
+      <aliases>
+	<alias name="parser_expands_entities"/>
+      </aliases>
+      <production>
+	<selfref/>
+	<directive type="commit"/>
+	<ruleref ref="expression"/>
+	<action>[\&amp;XML::XSH::Functions::set_expand_entities,$item[3]]</action>
+      </production>
+      <documentation sections="configuration">
 	<usage>parser_expands_entities <xref linkend="expression"/></usage>
+	<shortdesc>turn on/off parser's tendency to expand entities</shortdesc>
 	<description>
 	  <para>
 	    Turn on the entity expansion during the parse process if the
@@ -2264,14 +3131,19 @@ sub new {
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="keep_blanks" name="keep_blanks">
+    <rule id="keep_blanks" type="command" name="keep-blanks" inline="yes">
+      <aliases>
+	<alias name="keep_blanks"/>
+      </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::set_keep_blanks,$item[2]]</action>
+	<action>[\&amp;XML::XSH::Functions::set_keep_blanks,$item[3]]</action>
       </production>
-      <documentation>
+      <documentation sections="configuration">
 	<usage>keep_blanks <xref linkend="expression"/></usage>
+	<shortdesc>turn on/off ignorable whitespace preservation</shortdesc>
 	<description>
 	  <para>
 	    Allows you to turn off XML::LibXML's default behaviour of
@@ -2281,14 +3153,19 @@ sub new {
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="pedantic_parser" name="pedantic_parser">
+    <rule id="pedantic_parser" type="command" name="pedantic-parser" inline="yes">
+      <aliases>
+	<alias name="pedantic_parser"/>
+      </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::set_pedantic_parser,$item[2]]</action>
+	<action>[\&amp;XML::XSH::Functions::set_pedantic_parser,$item[3]]</action>
       </production>
-      <documentation>
+      <documentation sections="configuration">
 	<usage>pedantic_parser <xref linkend="expression"/></usage>
+	<shortdesc>make the parser more pedantic</shortdesc>
 	<description>
 	  <para>
 	    If you wish, you can make XML::LibXML more pedantic by passing
@@ -2297,14 +3174,21 @@ sub new {
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="complete_attributes" name="complete_attributes">
+    <rule id="complete_attributes" type="command" name="parser-completes-attributes" inline="yes">
+      <aliases>
+	<alias name="complete_attributes"/>
+	<alias name="complete-attributes"/>
+	<alias name="parser_completes_attributes"/>
+      </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::set_complete_attributes,$item[2]]</action>
+	<action>[\&amp;XML::XSH::Functions::set_complete_attributes,$item[3]]</action>
       </production>
-      <documentation>
-	<usage>complete_attributes <xref linkend="expression"/></usage>
+      <documentation sections="configuration">
+	<usage>parser-completes-attributes <xref linkend="expression"/></usage>
+	<shortdesc>turn on/off parser's ability to fill default attribute values</shortdesc>
 	<description>
 	  <para>
 	    If the expression is non-zero, this command allows XML parser
@@ -2314,28 +3198,37 @@ sub new {
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="indent" name="indent">
+    <rule id="indent" type="command" name="indent" inline="yes">
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::set_indent,$item[2]]</action>
+	<action>[\&amp;XML::XSH::Functions::set_indent,$item[3]]</action>
       </production>
-      <documentation>
+      <documentation sections="configuration">
 	<usage>indent <xref linkend="expression"/></usage>
+	<shortdesc>turn on/off pretty-printing</shortdesc>
 	<description>
-	  <para>Format the XML output while saving a document.</para>
+	  <para>If the <xref linkend="expression"/> is non-zero,
+	    format the XML output while saving a document
+	    by adding some nice ignorable whitespace.
+	  </para>
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="parser_expands_xinclude" name="parser_expands_xinclude">
+    <rule id="parser_expands_xinclude" type="command" name="parser-expands-xinclude" inline="yes">
+      <aliases>
+	<alias name="parser_expands_xinclude"/>
+      </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::set_expand_xinclude,$item[2]]</action>
+	<action>[\&amp;XML::XSH::Functions::set_expand_xinclude,$item[3]]</action>
       </production>
-      <documentation>
-	<usage>parser_expands_xinclude <xref
-	    linkend="expression"/></usage>
+      <documentation sections="configuration">
+	<usage>parser_expands_xinclude <xref linkend="expression"/></usage>
+	<shortdesc>turn on/off transparent XInclude insertion by parser</shortdesc>
 	<description>
 	  <para>
 	    If the <xref linkend="expression"/> is non-zero, the parser is
@@ -2348,14 +3241,19 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
-    <rule type='command' id="load_ext_dtd" name="load_ext_dtd">
+    <rule id="load_ext_dtd" type="command" name="load-ext-dtd" inline="yes">
+      <aliases>
+	<alias name="load_ext_dtd"/>
+      </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::set_expand_xinclude,$item[2]]</action>
+	<action>[\&amp;XML::XSH::Functions::set_load_ext_dtd,$item[3]]</action>
       </production>
-      <documentation>
+      <documentation sections="configuration">
 	<usage>load_ext_dtd <xref linkend="expression"/></usage>
+	<shortdesc>turn on/off external DTD fetching</shortdesc>
 	<description>
 	  <para>
 	    If the expression is non-zero, XML parser loads external DTD
@@ -2364,39 +3262,47 @@ sub new {
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="encoding" name="encoding">
+    <rule id="encoding" type="command" name="encoding" inline="yes">
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::set_encoding,$item[2]]</action>
+	<action>[\&amp;XML::XSH::Functions::set_encoding,$item[3]]</action>
       </production>
-      <documentation>
+      <documentation sections="configuration">
 	<usage>encoding <xref linkend="enc_string"/></usage>
+	<shortdesc>choose output charset</shortdesc>
 	<description>
 	  <para>Set the default output character encoding.</para>
 	</description>
       </documentation>
     </rule>
-    <rule type='command' id="query_encoding" name="query-encoding">
+    <rule id="query_encoding" type="command" name="query-encoding" inline="yes">
+      <aliases>
+	<alias name="query_encoding"/>
+      </aliases>
       <production>
 	<selfref/>
+	<directive type="commit"/>
 	<ruleref ref="expression"/>
-	<action>[\&amp;XML::XSH::Functions::set_qencoding,$item[2]]</action>
+	<action>[\&amp;XML::XSH::Functions::set_qencoding,$item[3]]</action>
       </production>
-      <documentation>
+      <documentation sections="configuration">
 	<usage>query-encoding <xref linkend="enc_string"/></usage>
+	<shortdesc>declare the charset of XSH source files and terminal input</shortdesc>
 	<description>
 	  <para>Set the default query character encoding.</para>
 	</description>
       </documentation>
     </rule>
-    <rule id="quiet" type='command' name="quiet">
+    <rule id="quiet" type="command" name="quiet" inline="yes">
       <production>
 	<selfref/>
 	<action>[\&amp;XML::XSH::Functions::set_opt_q,1]</action>
       </production>
-      <documentation>
+      <documentation sections="configuration">
 	<usage>quiet</usage>
+	<shortdesc>turn off many XSH messages</shortdesc>
 	<description>
 	  <para>Turn off verbose messages.</para>
 	</description>
@@ -2405,9 +3311,107 @@ sub new {
 	</see-also>
       </documentation>
     </rule>
+    <rule id="backups" type="command" name="backups" inline="yes">
+      <production>
+	<selfref/>
+	<action>[\&amp;XML::XSH::Functions::set_backups,1]</action>
+      </production>
+      <documentation sections="configuration documents">
+	<usage>backups</usage>
+	<shortdesc>turn on backup file creation</shortdesc>
+	<description>
+	  <para>Enable creating backup files on save (default).</para>
+	</description>
+	<see-also>
+	  <ruleref ref="nobackups"/>
+	</see-also>
+      </documentation>
+    </rule>
+    <rule id="nobackups" type="command" name="nobackups" inline="yes">
+      <production>
+	<selfref/>
+	<action>[\&amp;XML::XSH::Functions::set_backups,0]</action>
+      </production>
+      <documentation sections="configuration documents">
+	<usage>nobackups</usage>
+	<shortdesc>turn off backup file creation</shortdesc>
+	<description>
+	  <para>Disable creating backup files on save.</para>
+	</description>
+	<see-also>
+	  <ruleref ref="nobackups"/>
+	</see-also>
+      </documentation>
+    </rule>
+    <rule id="fold_command" type="command" name="fold" inline="yes">
+      <production>
+	<selfref/>
+	<ruleref ref="xpath"/>
+	<ruleref ref="expression" rep="?"/>
+	<action>[\&amp;XML::XSH::Functions::mark_fold,$item[2],@{$item[3]}]</action>
+      </production>
+      <documentation sections="navigation">
+	<usage>fold <xref linkend="xpath"/> [<xref
+	linkend="expression"/>]</usage>
+	<shortdesc>mark elements to be folded by list
+	command</shortdesc>
+	<description>
+	  <para>
+	    This feature is still EXPERIMENTAL! Fold command may be
+	    used to mark elements matching the <xref linkend="xpath"/>
+	    with a <literal>xsh:fold</literal> attribute from the
+	    <literal>http://xsh.sourceforge.net/xsh/</literal>
+	    namespace. When listing the DOM tree using <literal><xref
+	    linkend="list_command"/> <xref linkend="xpath"/>
+	    fold</literal>, elements marked in this way are folded to
+	    the depth given by the <xref linkend="expression"/>
+	    (default depth is 0 = fold immediately).
+	  </para>
+	  <example>
+	    <code>xsh> <userinput>fold //chapter 1</userinput>
+	      xsh> <userinput>ls //chapter[1] fold</userinput>
+	      &lt;chapter id="intro" xsh:fold="1">
+	      <tab/>&lt;title>...&lt;/title>
+	      <tab/>&lt;para>...&lt;/para>
+	      <tab/>&lt;para>...&lt;/para>
+	      &lt;/chapter>
+	    </code>
+	  </example>
+	</description>
+	<see-also>
+	  <ruleref ref="unfold_command"/>
+	  <ruleref ref="list_command"/>
+	</see-also>
+      </documentation>
+    </rule>
+    <rule id="unfold_command" type="command" name="unfold" inline="yes">
+      <production>
+	<selfref/>
+	<ruleref ref="xpath"/>
+	<action>[\&amp;XML::XSH::Functions::mark_unfold,$item[2]]</action>
+      </production>
+      <documentation sections="navigation">
+	<usage>unfold <xref linkend="xpath"/></usage>
+	<shortdesc>unfold elements folded with fold command</shortdesc>
+	<description>
+	  <para>
+	    This feature is still EXPERIMENTAL! Unfold command removes
+	    <literal>xsh:fold</literal> attributes from all elements
+	    matching given <xref linkend="xpath"/> created by previous
+	    usage of <xref linkend="fold_command"/>.  Be aware, that
+	    <literal>xmlns:xsh</literal> namespace declaration may
+	    still be present in the document even when all elements
+	    are unfolded.
+	  </para>
+	</description>
+	<see-also>
+	  <ruleref ref="fold_command"/>
+	  <ruleref ref="list_command"/>
+	</see-also>
+      </documentation>
+    </rule>
   </rules>  
 </recdescent-xml>
-
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: xml
